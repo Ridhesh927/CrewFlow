@@ -22,6 +22,7 @@ model User {
   ratingsGot   Rating[]     @relation("UserToRating")
   proofs       Proof[]
   leaveRequests LeaveRequest[]
+  announcements Announcement[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 }
@@ -96,4 +97,16 @@ model LeaveRequest {
   reason    String
   status    LeaveStatus @default(PENDING)
   createdAt DateTime    @default(now())
+}
+
+model Announcement {
+  id               Int      @id @default(autoincrement())
+  title            String
+  content          String
+  targetRole       Role?
+  targetDepartment String?
+  authorId         Int
+  author           User     @relation(fields: [authorId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
