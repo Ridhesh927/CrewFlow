@@ -50,7 +50,16 @@ model Task {
   deadline       DateTime
   status         String   @default("Active")
   proofs         Proof[]
+  subTasks       SubTask[]
   createdAt      DateTime @default(now())
+}
+
+model SubTask {
+  id          Int      @id @default(autoincrement())
+  taskId      Int
+  task        Task     @relation(fields: [taskId], references: [id])
+  title       String
+  createdAt   DateTime @default(now())
 }
 
 model Proof {
@@ -61,6 +70,7 @@ model Proof {
   intern    User     @relation(fields: [internId], references: [id])
   status    String   @default("Pending") // Pending, Approved, Rejected
   imageUrl  String?
+  completedSubTasks Int[]
   timestamp DateTime @default(now())
 }
 

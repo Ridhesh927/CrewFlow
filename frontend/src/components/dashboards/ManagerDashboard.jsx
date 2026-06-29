@@ -46,25 +46,40 @@ export function ManagerDashboard({ role }) {
         <Card className="col-span-2">
           <CardHeader>
             <CardTitle>Proofs Awaiting Verification</CardTitle>
-            <CardDescription>Review submitted tasks</CardDescription>
+            <CardDescription>Review submitted tasks and sub-tasks</CardDescription>
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">IMG</span>
+              {[
+                { id: 1, title: "LinkedIn Post", intern: "Alex Intern", subTasks: ["Like the post", "Share with a comment"] },
+                { id: 2, title: "Weekly Update", intern: "Sam Trainee", subTasks: ["Draft update"] }
+              ].map((proof) => (
+                <div key={proof.id} className="flex flex-col p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">IMG</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">{proof.title}</h4>
+                        <p className="text-xs text-muted-foreground">Submitted by: {proof.intern}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-sm">LinkedIn Post</h4>
-                      <p className="text-xs text-muted-foreground">Submitted by: Intern Name</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">Reject</Button>
+                      <Button size="sm">Approve</Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">Reject</Button>
-                    <Button size="sm">Approve</Button>
-                  </div>
+                  {proof.subTasks && proof.subTasks.length > 0 && (
+                    <div className="mt-2 pl-14">
+                      <p className="text-xs text-muted-foreground mb-1">Completed Sub-tasks:</p>
+                      <ul className="text-xs list-disc pl-4 text-primary">
+                        {proof.subTasks.map((st, idx) => (
+                          <li key={idx}>{st}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

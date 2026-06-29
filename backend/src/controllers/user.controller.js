@@ -22,13 +22,14 @@ const getDashboardData = async (request, reply) => {
     const subIds = user.subordinates.map(s => s.id)
     pendingProofs = await request.server.prisma.proof.findMany({
       where: { internId: { in: subIds }, status: 'Pending' },
-      include: { task: true, intern: true }
+      include: { task: { include: { subTasks: true } }, intern: true }
     })
   }
 
   // Active Tasks
   const activeTasks = await request.server.prisma.task.findMany({
-    where: { status: 'Active' }
+    where: { status: 'Active' },
+    include: { subTasks: true }
   })
 
   return { 

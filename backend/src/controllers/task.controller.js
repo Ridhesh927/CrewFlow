@@ -1,13 +1,33 @@
+const createTask = async (request, reply) => {
+  const { title, description, targetAudience, deadline, subTasks } = request.body
+  
+  const task = await request.server.prisma.task.create({
+    data: {
+      title,
+      description,
+      targetAudience,
+      deadline: new Date(deadline),
+      subTasks: subTasks && subTasks.length > 0 ? {
+        create: subTasks.map(st => ({ title: st.title }))
+      } : undefined
+    },
+    include: { subTasks: true }
+  })
+  
+  return { success: true, task }
+}
+
 const fillTaskSheet = async (request, reply) => {
   const internId = request.user.id
-  const { taskId, imageUrl } = request.body
+  const { taskId, imageUrl, completedSubTasks } = request.body
 
   // Note: Only INTERN roles are allowed to access this endpoint via middleware
   const proof = await request.server.prisma.proof.create({
     data: {
       taskId,
       internId,
-      imageUrl
+      imageUrl,
+      completedSubTasks: completedSubTasks || []
     }
   })
 
@@ -33,4 +53,4 @@ const approveProof = async (request, reply) => {
   return { success: true, proof }
 }
 
-module.exports = { fillTaskSheet, approveProof }
+module.exports = { createTask, fillTaskSheet, approveProof }
