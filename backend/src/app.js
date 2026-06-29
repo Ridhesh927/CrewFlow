@@ -10,10 +10,13 @@ const taskRoutes = require('./routes/task.routes')
 const leaveRoutes = require('./routes/leave.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
 const announcementRoutes = require('./routes/announcement.routes')
+const documentRoutes = require('./routes/document.routes')
 
 fastify.register(cors, { 
   origin: '*'
 })
+
+fastify.register(require('@fastify/multipart'), { attachFieldsToBody: false })
 
 fastify.register(prismaPlugin)
 fastify.register(jwtPlugin)
@@ -26,5 +29,6 @@ fastify.register(taskRoutes, { prefix: '/api/v1/tasks' })
 fastify.register(leaveRoutes, { prefix: '/api/v1/leaves' })
 fastify.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
 fastify.register(announcementRoutes, { prefix: '/api/v1/announcements' })
+fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
 
 module.exports = fastify

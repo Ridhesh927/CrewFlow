@@ -23,6 +23,7 @@ model User {
   proofs       Proof[]
   leaveRequests LeaveRequest[]
   announcements Announcement[]
+  documents    Document[]
   points       Int          @default(0)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -110,4 +111,16 @@ model Announcement {
   author           User     @relation(fields: [authorId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Document {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  fileUrl     String
+  fileType    String
+  uploadedBy  Int
+  uploader    User     @relation(fields: [uploadedBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
