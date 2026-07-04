@@ -3,40 +3,36 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Clock, Upload, Star } from "lucide-react";
+import { CheckCircle2, Clock, Upload, Star, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useDashboardMetrics, useUserAnalytics } from "@/hooks/useAnalytics";
 
-const personalAnalytics = [
-  { name: 'Jan', rating: 4.2, tasks: 5 },
-  { name: 'Feb', rating: 4.4, tasks: 7 },
-  { name: 'Mar', rating: 4.5, tasks: 8 },
-  { name: 'Apr', rating: 4.7, tasks: 6 },
-  { name: 'May', rating: 4.8, tasks: 9 },
-  { name: 'Jun', rating: 4.9, tasks: 12 },
-];
+export function InternDashboard({ userId }) {
+  const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
+  const { data: userData, isLoading: loadingUser } = useUserAnalytics(userId);
 
-export function InternDashboard() {
-  const tasks = [
-    { 
-      id: 1, 
-      title: "LinkedIn Repost Campaign", 
-      deadline: "Today, 5:00 PM", 
-      status: "Pending",
-      subTasks: [
-        { id: 101, title: "Like the post", completed: false },
-        { id: 102, title: "Share with a comment", completed: false }
-      ]
-    },
-    { 
-      id: 2, 
-      title: "Write Weekly Update", 
-      deadline: "Friday, 4:00 PM", 
-      status: "Completed",
-      subTasks: [
-        { id: 201, title: "Draft update", completed: true },
-        { id: 202, title: "Submit to Manager", completed: true }
-      ]
-    },
+  if (loadingDash || loadingUser) {
+    return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  const { activeTasks = [], proofs = [] } = dashboardData || {};
+  const { analytics } = userData || {};
+  
+  const present = analytics?.attendanceStats?.Present || 0;
+  const absent = analytics?.attendanceStats?.Absent || 0;
+  const late = analytics?.attendanceStats?.Late || 0;
+  const leave = analytics?.attendanceStats?.Leave || 0;
+  const totalAtt = present + absent + late + leave;
+  const attRate = totalAtt > 0 ? Math.round((present / totalAtt) * 100) : 0;
+  
+  const rating = analytics?.averageRating?.toFixed(1) || "0.0";
+  const tasksCompleted = analytics?.taskCompletions || 0;
+
+  // Personal analytics chart (could be built from historical ratings if API supported it)
+  // For MVP, we will use a simplified single point or mock trend to not break the chart structure completely,
+  // or we can just render the UI. Let's keep a placeholder chart until historical data is tracked.
+  const personalAnalytics = [
+    { name: 'Current', rating: parseFloat(rating), tasks: tasksCompleted }
   ];
 
   return (
@@ -48,8 +44,8 @@ export function InternDashboard() {
             <Clock className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">95%</div>
-            <p className="text-xs text-muted-foreground mt-1">Present: 19 | Absent: 1</p>
+            <div className="text-2xl font-bold">{attRate}%</div>
+            <p className="text-xs text-muted-foreground mt-1">Present: {present} | Absent: {absent}</p>
           </CardContent>
         </Card>
         <Card>
@@ -58,8 +54,8 @@ export function InternDashboard() {
             <Star className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.8/5.0</div>
-            <p className="text-xs text-muted-foreground mt-1">Excellent - May 2026</p>
+            <div className="text-2xl font-bold">{rating}/5.0</div>
+            <p className="text-xs text-muted-foreground mt-1">Average rating</p>
           </CardContent>
         </Card>
         <Card>
@@ -68,8 +64,8 @@ export function InternDashboard() {
             <CheckCircle2 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground mt-1">Due soon</p>
+            <div className="text-2xl font-bold">{activeTasks.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Currently active</p>
           </CardContent>
         </Card>
       </div>
@@ -82,22 +78,20 @@ export function InternDashboard() {
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
             <div className="space-y-4">
-              {tasks.map((task) => (
+              {activeTasks.length > 0 ? activeTasks.map((task) => (
                 <div key={task.id} className="flex flex-col p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h4 className="font-semibold text-sm">{task.title}</h4>
-                      <p className="text-xs text-muted-foreground">Due: {task.deadline}</p>
+                      <p className="text-xs text-muted-foreground">Due: {new Date(task.deadline).toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <Badge variant={task.status === "Completed" ? "default" : "outline"} className={task.status === "Pending" ? "text-amber-500 border-amber-500/50" : ""}>
+                      <Badge variant="outline" className="text-amber-500 border-amber-500/50">
                         {task.status}
                       </Badge>
-                      {task.status === "Pending" && (
-                        <Button size="sm" variant="secondary" className="h-7 text-xs">
-                          <Upload className="mr-1 h-3 w-3" /> Submit Proof
-                        </Button>
-                      )}
+                      <Button size="sm" variant="secondary" className="h-7 text-xs">
+                        <Upload className="mr-1 h-3 w-3" /> Submit Proof
+                      </Button>
                     </div>
                   </div>
                   {task.subTasks && task.subTasks.length > 0 && (
@@ -109,7 +103,6 @@ export function InternDashboard() {
                             <input 
                               type="checkbox" 
                               id={`subtask-${st.id}`} 
-                              defaultChecked={st.completed}
                               className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
                             />
                             <label htmlFor={`subtask-${st.id}`} className="text-xs text-foreground">
@@ -121,7 +114,9 @@ export function InternDashboard() {
                     </div>
                   )}
                 </div>
-              ))}
+              )) : (
+                 <p className="text-sm text-muted-foreground">No active tasks</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -132,7 +127,13 @@ export function InternDashboard() {
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
              <div className="text-sm text-muted-foreground text-center py-8">
-               No recent activity to display.
+               {proofs.length > 0 ? (
+                 <ul className="text-left space-y-2">
+                    {proofs.map(p => (
+                       <li key={p.id}>Submitted proof for task #{p.taskId} - {p.status}</li>
+                    ))}
+                 </ul>
+               ) : "No recent activity to display."}
              </div>
           </CardContent>
         </Card>

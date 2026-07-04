@@ -22,11 +22,11 @@ export default function DashboardPage() {
         <p className="text-muted-foreground mt-1">Here is what's happening with your team today.</p>
       </div>
 
-      {user.role === "ADMIN" && <AdminDashboard />}
+      {user.role === "ADMIN" && <AdminDashboard userId={user.id} />}
       {(user.role === "SENIOR_TL" || user.role === "TL" || user.role === "CAPTAIN") && (
-        <ManagerDashboard role={user.role} />
+        <ManagerDashboard role={user.role} userId={user.id} />
       )}
-      {user.role === "INTERN" && <InternDashboard />}
+      {user.role === "INTERN" && <InternDashboard userId={user.id} />}
     </motion.div>
   );
 }
