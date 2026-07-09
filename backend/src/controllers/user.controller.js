@@ -40,26 +40,56 @@ const getDashboardData = async (request, reply) => {
   }
 }
 
-const createIntern = async (request, reply) => {
-  const { email, password, name, department } = request.body
+const createUser = async (request, reply) => {
+  const { email, password, name, department, role, specialId, phoneNo } = request.body
   const managerId = request.user.id // The creator is the manager
 
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10)
 
-  const newIntern = await request.server.prisma.user.create({
+  const newUser = await request.server.prisma.user.create({
     data: {
       email,
       password: hashedPassword,
       name,
       department,
-      role: 'INTERN',
+      role: role || 'INTERN',
+      specialId,
+      phoneNo,
       managerId
     }
   })
 
-  delete newIntern.password
-  return { success: true, user: newIntern }
+  delete newUser.password
+  return { success: true, user: newUser }
+}
+
+const getAllUsers = async (request, reply) => {
+  const users = await request.server.prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      department: true,
+      specialId: true,
+      phoneNo: true,
+      isActive: true,
+      points: true,
+      manager: {
+        select: {
+          id: true,
+          name: true,
+          role: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+  
+  return { success: true, users }
 }
 
 const promoteUser = async (request, reply) => {
@@ -113,4 +143,36 @@ const getLeaderboard = async (request, reply) => {
   return { success: true, leaderboard: topUsers }
 }
 
-module.exports = { getDashboardData, createIntern, promoteUser, getLeaderboard }
+const toggleUserStatus = async (request, reply) => {
+  const userId = parseInt(request.params.id)
+  
+  if (userId === 1) {
+    return reply.code(403).send({ error: 'Cannot modify the primary admin account' })
+  }
+
+  const user = await request.server.prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return reply.code(404).send({ error: 'User not found' })
+
+  const updatedUser = await request.server.prisma.user.update({
+    where: { id: userId },
+    data: { isActive: !user.isActive }
+  })
+
+  return { success: true, isActive: updatedUser.isActive }
+}
+
+const deleteUser = async (request, reply) => {
+  const userId = parseInt(request.params.id)
+  
+  if (userId === 1) {
+    return reply.code(403).send({ error: 'Cannot delete the primary admin account' })
+  }
+
+  await request.server.prisma.user.delete({
+    where: { id: userId }
+  })
+
+  return { success: true }
+}
+
+module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser }

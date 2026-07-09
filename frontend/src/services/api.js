@@ -9,6 +9,11 @@ export const fetchApi = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
+  // Fastify body parser crashes if Content-Type is application/json but body is empty for these methods
+  if (!options.body && options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase())) {
+    options.body = JSON.stringify({});
+  }
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
