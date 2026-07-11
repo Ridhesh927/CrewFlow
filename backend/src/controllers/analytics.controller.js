@@ -1,4 +1,4 @@
-const { prisma } = require('../plugins/prisma');
+
 
 async function getUserAnalytics(request, reply) {
   try {
@@ -6,7 +6,7 @@ async function getUserAnalytics(request, reply) {
     const targetUserId = parseInt(id);
     const { role, id: requesterId } = request.user;
 
-    const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+    const targetUser = await request.server.prisma.user.findUnique({ where: { id: targetUserId } });
     if (!targetUser) {
       return reply.code(404).send({ error: 'User not found' });
     }
@@ -17,18 +17,18 @@ async function getUserAnalytics(request, reply) {
     }
 
     // Average Rating
-    const ratings = await prisma.rating.aggregate({
+    const ratings = await request.server.prisma.rating.aggregate({
       where: { userId: targetUserId },
       _avg: { rating: true }
     });
 
     // Task Completions (Approved Proofs)
-    const taskCompletions = await prisma.proof.count({
+    const taskCompletions = await request.server.prisma.proof.count({
       where: { internId: targetUserId, status: 'Approved' }
     });
 
     // Attendance Stats
-    const attendances = await prisma.attendance.groupBy({
+    const attendances = await request.server.prisma.attendance.groupBy({
       by: ['status'],
       where: { userId: targetUserId },
       _count: { status: true }
@@ -78,7 +78,7 @@ async function getTeamAnalytics(request, reply) {
       usersQuery = { managerId: requesterId };
     }
 
-    const users = await prisma.user.findMany({
+    const users = await request.server.prisma.user.findMany({
       where: usersQuery,
       select: { id: true, name: true, department: true }
     });
@@ -90,21 +90,21 @@ async function getTeamAnalytics(request, reply) {
     const userIds = users.map(u => u.id);
 
     // Get all ratings for these users
-    const ratings = await prisma.rating.groupBy({
+    const ratings = await request.server.prisma.rating.groupBy({
       by: ['userId'],
       where: { userId: { in: userIds } },
       _avg: { rating: true }
     });
 
     // Get task completions
-    const taskCompletions = await prisma.proof.groupBy({
+    const taskCompletions = await request.server.prisma.proof.groupBy({
       by: ['internId'],
       where: { internId: { in: userIds }, status: 'Approved' },
       _count: { id: true }
     });
 
     // Get attendance
-    const attendances = await prisma.attendance.groupBy({
+    const attendances = await request.server.prisma.attendance.groupBy({
       by: ['userId', 'status'],
       where: { userId: { in: userIds } },
       _count: { status: true }

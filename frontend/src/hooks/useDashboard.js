@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchApi } from '../services/api';
+import { executeApiRequest } from '../services/api';
 
 export const useDashboard = (userId) => {
   const [data, setData] = useState(null);
@@ -15,7 +15,7 @@ export const useDashboard = (userId) => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const result = await fetchApi(`/users/${userId}/dashboard`);
+        const result = await executeApiRequest(`/users/${userId}/dashboard`);
         setData(result);
       } catch (err) {
         setError(err.message);

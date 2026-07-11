@@ -45,6 +45,7 @@ export default function UsersPage() {
   const toggleStatus = useToggleUserStatus();
   const deleteUser = useDeleteUser();
   const [open, setOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: null, user: null });
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -202,11 +203,11 @@ export default function UsersPage() {
                             <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => toggleStatus.mutate(u.id)}>
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'status', user: u })}>
                             <Power className="mr-2 h-4 w-4" />
                             {u.isActive ? "Disable Account" : "Enable Account"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => deleteUser.mutate(u.id)} className="text-red-600 focus:text-red-600">
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'delete', user: u })} className="text-red-600 focus:text-red-600">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Account
                           </DropdownMenuItem>
@@ -220,6 +221,38 @@ export default function UsersPage() {
           </Table>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog.type === 'delete' ? 'Delete Account' : (confirmDialog.user?.isActive ? 'Disable Account' : 'Enable Account')}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmDialog.type === 'delete' 
+                ? `Are you sure you want to permanently delete ${confirmDialog.user?.name}'s account? All their data will be erased. This action cannot be undone.` 
+                : `Are you sure you want to ${confirmDialog.user?.isActive ? 'disable' : 'enable'} ${confirmDialog.user?.name}'s account?`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null })}>Cancel</Button>
+            <Button 
+              variant={confirmDialog.type === 'delete' ? "destructive" : "default"}
+              onClick={() => {
+                if (confirmDialog.type === 'delete') {
+                  deleteUser.mutate(confirmDialog.user.id);
+                } else {
+                  toggleStatus.mutate(confirmDialog.user.id);
+                }
+                setConfirmDialog({ isOpen: false, type: null, user: null });
+              }}
+            >
+              {confirmDialog.type === 'delete' ? 'Delete' : 'Confirm'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

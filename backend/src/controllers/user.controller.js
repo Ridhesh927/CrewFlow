@@ -42,6 +42,7 @@ const getDashboardData = async (request, reply) => {
 
 const createUser = async (request, reply) => {
   const { email, password, name, department, role, specialId, phoneNo } = request.body
+  const cleanEmail = email.trim()
   const managerId = request.user.id // The creator is the manager
 
   // Hash password
@@ -49,7 +50,7 @@ const createUser = async (request, reply) => {
 
   const newUser = await request.server.prisma.user.create({
     data: {
-      email,
+      email: cleanEmail,
       password: hashedPassword,
       name,
       department,

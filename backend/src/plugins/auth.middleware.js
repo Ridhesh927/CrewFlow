@@ -6,7 +6,7 @@ const requireRole = (roles) => {
         return reply.code(403).send({ error: 'Forbidden: Insufficient privileges' })
       }
     } catch (err) {
-      reply.send(err)
+      return reply.code(401).send({ error: 'Unauthorized' })
     }
   }
 }
@@ -57,7 +57,7 @@ const requireHierarchy = async (request, reply) => {
     }
 
   } catch (err) {
-    reply.send(err)
+    return reply.code(401).send({ error: 'Unauthorized' })
   }
 }
 

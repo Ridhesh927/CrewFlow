@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fetchApi } from '../services/api';
+import { executeApiRequest } from '../services/api';
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -10,7 +10,7 @@ export const useAuthStore = create((set) => ({
   login: async (email, password) => {
     try {
       set({ error: null });
-      const data = await fetchApi('/auth/login', {
+      const data = await executeApiRequest('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
