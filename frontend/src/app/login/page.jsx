@@ -39,12 +39,11 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-[400px] relative z-10"
+        className="w-full relative z-10 mx-auto"
+        style={{ maxWidth: '448px' }}
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-            <Building2 className="text-primary-foreground h-6 w-6" />
-          </div>
+          <img src="/crewflow fevicon.png" alt="CrewFlow Logo" className="h-20 w-20 mb-4 object-contain drop-shadow-md" />
           <h1 className="text-2xl font-bold tracking-tight">Intern Management System</h1>
         </div>
 

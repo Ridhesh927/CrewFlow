@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power } from "lucide-react";
+import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search } from "lucide-react";
 import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser } from "@/hooks/useUsers";
 
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,11 @@ export default function UsersPage() {
     specialId: "",
     phoneNo: "",
   });
+  const [departmentFilter, setDepartmentFilter] = useState("ALL");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [pointsSort, setPointsSort] = useState("DEFAULT");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -69,6 +74,27 @@ export default function UsersPage() {
 
   const users = data?.users || [];
 
+  const departments = ["ALL", ...new Set(users.map(u => u.department).filter(Boolean))];
+  const roles = ["ALL", ...new Set(users.map(u => u.role).filter(Boolean))];
+  
+  let filteredUsers = users.filter(u => {
+    const matchesDept = departmentFilter === "ALL" || u.department === departmentFilter;
+    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+    const matchesStatus = statusFilter === "ALL" || 
+      (statusFilter === "ACTIVE" && u.isActive) || 
+      (statusFilter === "DISABLED" && !u.isActive);
+    const matchesSearch = 
+      (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (u.email || "").toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesDept && matchesRole && matchesStatus && matchesSearch;
+  });
+
+  if (pointsSort === "HIGH_TO_LOW") {
+    filteredUsers.sort((a, b) => (b.points || 0) - (a.points || 0));
+  } else if (pointsSort === "LOW_TO_HIGH") {
+    filteredUsers.sort((a, b) => (a.points || 0) - (b.points || 0));
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -81,7 +107,59 @@ export default function UsersPage() {
           <p className="text-muted-foreground mt-1">Manage system users, roles, and groups.</p>
         </div>
         
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center border border-input rounded-md px-3 bg-transparent h-10 w-[180px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0 mr-2" />
+            <input
+              type="search"
+              placeholder="Search users..."
+              className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground w-full h-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Group" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map(dept => (
+                <SelectItem key={dept} value={dept}>{dept === "ALL" ? "All Groups" : dept}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map(role => (
+                <SelectItem key={role} value={role}>{role === "ALL" ? "All Roles" : role}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="DISABLED">Disabled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={pointsSort} onValueChange={setPointsSort}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Sort Points" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="DEFAULT">Default Sort</SelectItem>
+              <SelectItem value="HIGH_TO_LOW">Points: High to Low</SelectItem>
+              <SelectItem value="LOW_TO_HIGH">Points: Low to High</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-2 h-4 w-4" /> Add User
           </DialogTrigger>
@@ -152,6 +230,7 @@ export default function UsersPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       
       <div className="rounded-md border bg-card">
@@ -159,7 +238,7 @@ export default function UsersPage() {
           <div className="flex h-48 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col h-48 items-center justify-center text-muted-foreground">
             <UsersIcon className="h-10 w-10 mb-4 opacity-50" />
             <p>No users found.</p>
@@ -178,7 +257,7 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((u) => (
+              {filteredUsers.map((u) => (
                 <TableRow key={u.id} className={!u.isActive ? "opacity-50 grayscale" : ""}>
                   <TableCell>
                     <div className="font-medium flex items-center gap-2">

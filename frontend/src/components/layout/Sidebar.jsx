@@ -93,9 +93,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         )}
       >
         <div className="h-16 flex items-center px-6 border-b border-border/50">
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-md shadow-primary/20">
-            <Building2 className="text-primary-foreground h-4 w-4" />
-          </div>
+          <img src="/crewflow fevicon.png" alt="CrewFlow Logo" className="h-10 w-10 mr-3 object-contain drop-shadow-sm" />
           <span className="font-bold text-lg tracking-tight">Intern Management</span>
         </div>
 

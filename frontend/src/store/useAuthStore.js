@@ -1,33 +1,43 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { executeApiRequest } from '../services/api';
 
-export const useAuthStore = create((set) => ({
-  user: null,
-  isAuthenticated: false,
-  error: null,
-  
-  // Real login function using API
-  login: async (email, password) => {
-    try {
-      set({ error: null });
-      const data = await executeApiRequest('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
+export const useAuthStore = create(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      error: null,
       
-      if (data.success) {
-        localStorage.setItem('jwt_token', data.token);
-        set({ user: data.user, isAuthenticated: true });
-        return true;
-      }
-    } catch (err) {
-      set({ error: err.message });
-      return false;
+      // Real login function using API
+      login: async (email, password) => {
+        try {
+          set({ error: null });
+          const data = await executeApiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+          });
+          
+          if (data.success) {
+            localStorage.setItem('jwt_token', data.token);
+            set({ user: data.user, isAuthenticated: true });
+            return true;
+          }
+        } catch (err) {
+          set({ error: err.message });
+          return false;
+        }
+      },
+      
+      logout: () => {
+        localStorage.removeItem('jwt_token');
+        set({ user: null, isAuthenticated: false, error: null });
+      },
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     }
-  },
-  
-  logout: () => {
-    localStorage.removeItem('jwt_token');
-    set({ user: null, isAuthenticated: false, error: null });
-  },
-}));
+  )
+);

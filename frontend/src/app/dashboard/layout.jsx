@@ -8,17 +8,22 @@ import { TopBar } from "@/components/layout/TopBar";
 
 export default function DashboardLayout({ children }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
 
   useEffect(() => {
-    // If no user in store, redirect to login
-    if (!user) {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    // Only check auth after hydration is complete
+    if (isHydrated && !user) {
       router.push("/login");
     }
-  }, [user, router]);
+  }, [user, router, isHydrated]);
 
-  if (!user) return null; // Or a loading spinner
+  if (!isHydrated || !user) return null; // Or a loading spinner
 
   return (
     <div className="min-h-screen bg-muted/20">
