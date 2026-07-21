@@ -45,6 +45,24 @@ const createUser = async (request, reply) => {
   const cleanEmail = email.trim()
   const managerId = request.user.id // The creator is the manager
 
+  // Validate that email is unique
+  const existingEmail = await request.server.prisma.user.findUnique({
+    where: { email: cleanEmail }
+  })
+  if (existingEmail) {
+    return reply.code(400).send({ error: 'Email already exists' })
+  }
+
+  // Validate that specialId is unique
+  if (specialId) {
+    const existingSpecialId = await request.server.prisma.user.findUnique({
+      where: { specialId }
+    })
+    if (existingSpecialId) {
+      return reply.code(400).send({ error: 'Special ID already exists. It must be unique.' })
+    }
+  }
+
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10)
 
