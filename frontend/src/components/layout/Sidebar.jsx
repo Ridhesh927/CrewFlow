@@ -50,6 +50,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
     if (user.role === "SENIOR_TL" || user.role === "TL") {
       return [
         ...commonLinks,
+        { name: "User Management", href: "/dashboard/users", icon: Users },
         { name: "My Team", href: "/dashboard/team", icon: Users },
         { name: "Attendance", href: "/dashboard/attendance", icon: CalendarDays },
         { name: "Verify Proofs", href: "/dashboard/tasks", icon: CheckSquare },

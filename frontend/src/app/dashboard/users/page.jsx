@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search } from "lucide-react";
-import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser } from "@/hooks/useUsers";
+import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog } from "lucide-react";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser } from "@/hooks/useUsers";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +41,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function UsersPage() {
+  const currentUser = useAuthStore((state) => state.user);
   const { data, isLoading } = useGetAllUsers();
   const createUser = useCreateUser();
   const toggleStatus = useToggleUserStatus();
   const deleteUser = useDeleteUser();
+  const promoteUser = usePromoteUser();
   const [open, setOpen] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: null, user: null });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: null, user: null, newRole: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -276,12 +279,16 @@ export default function UsersPage() {
                   <TableCell>{u.phoneNo || "-"}</TableCell>
                   <TableCell>{u.points}</TableCell>
                   <TableCell>
-                    {u.id !== 1 && (
+                    {u.id !== 1 && currentUser?.role === 'ADMIN' && (
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" className="h-8 w-8 p-0" />}>
                             <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'editRole', user: u, newRole: u.role })}>
+                            <UserCog className="mr-2 h-4 w-4" />
+                            Edit Role
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'status', user: u })}>
                             <Power className="mr-2 h-4 w-4" />
                             {u.isActive ? "Disable Account" : "Enable Account"}
@@ -302,29 +309,52 @@ export default function UsersPage() {
       </div>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null })}>
+      <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirmDialog.type === 'delete' ? 'Delete Account' : (confirmDialog.user?.isActive ? 'Disable Account' : 'Enable Account')}
+              {confirmDialog.type === 'delete' ? 'Delete Account' : confirmDialog.type === 'editRole' ? 'Edit User Role' : (confirmDialog.user?.isActive ? 'Disable Account' : 'Enable Account')}
             </DialogTitle>
             <DialogDescription>
               {confirmDialog.type === 'delete' 
                 ? `Are you sure you want to permanently delete ${confirmDialog.user?.name}'s account? All their data will be erased. This action cannot be undone.` 
+                : confirmDialog.type === 'editRole'
+                ? `Change the role for ${confirmDialog.user?.name}. Note: Your own role determines which roles you can assign.`
                 : `Are you sure you want to ${confirmDialog.user?.isActive ? 'disable' : 'enable'} ${confirmDialog.user?.name}'s account?`}
             </DialogDescription>
           </DialogHeader>
+          
+          {confirmDialog.type === 'editRole' && (
+            <div className="py-4 space-y-2">
+              <Label>New Role</Label>
+              <Select value={confirmDialog.newRole} onValueChange={(val) => setConfirmDialog({ ...confirmDialog, newRole: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="SENIOR_TL">Senior TL</SelectItem>
+                  <SelectItem value="TL">Team Leader</SelectItem>
+                  <SelectItem value="CAPTAIN">Captain</SelectItem>
+                  <SelectItem value="INTERN">Intern</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null })}>Cancel</Button>
+            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" })}>Cancel</Button>
             <Button 
               variant={confirmDialog.type === 'delete' ? "destructive" : "default"}
               onClick={() => {
                 if (confirmDialog.type === 'delete') {
                   deleteUser.mutate(confirmDialog.user.id);
+                } else if (confirmDialog.type === 'editRole') {
+                  promoteUser.mutate({ id: confirmDialog.user.id, newRole: confirmDialog.newRole });
                 } else {
                   toggleStatus.mutate(confirmDialog.user.id);
                 }
-                setConfirmDialog({ isOpen: false, type: null, user: null });
+                setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" });
               }}
             >
               {confirmDialog.type === 'delete' ? 'Delete' : 'Confirm'}

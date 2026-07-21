@@ -64,3 +64,21 @@ export function useDeleteUser() {
     }
   });
 }
+
+export function usePromoteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, newRole }) =>
+      executeApiRequest(`/users/${id}/promote`, {
+        method: "PUT",
+        body: JSON.stringify({ newRole }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "all"] });
+    },
+    onError: (err) => {
+      alert("Failed to change role: " + err.message);
+      console.error(err);
+    }
+  });
+}
