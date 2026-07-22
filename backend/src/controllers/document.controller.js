@@ -1,7 +1,5 @@
 const cloudinary = require('cloudinary').v2
-const stream = require('stream')
-const util = require('util')
-const pipeline = util.promisify(stream.pipeline)
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
