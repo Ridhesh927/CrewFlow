@@ -3,12 +3,11 @@ import { executeApiRequest } from '../services/api';
 
 export const useDashboard = (userId) => {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!userId);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!userId) {
-      setLoading(false);
       return;
     }
 

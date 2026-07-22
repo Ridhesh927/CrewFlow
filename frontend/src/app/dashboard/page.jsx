@@ -19,7 +19,7 @@ export default function DashboardPage() {
     >
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user.name}</h1>
-        <p className="text-muted-foreground mt-1">Here is what's happening with your team today.</p>
+        <p className="text-muted-foreground mt-1">Here is what&apos;s happening with your team today.</p>
       </div>
 
       {user.role === "ADMIN" && <AdminDashboard userId={user.id} />}
