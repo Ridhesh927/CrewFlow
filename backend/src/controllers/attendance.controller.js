@@ -6,19 +6,25 @@ const getAttendances = async (request, reply) => {
   
   if (userRole === 'INTERN') {
     whereClause = { userId: userId }
-  } else {
-    // If not intern, you might want to fetch all or based on query params
-    // Let's say managers can see attendances of their subordinates
-    const subordinates = await request.server.prisma.user.findMany({
-      where: { managerId: userId },
-      select: { id: true }
-    })
-    const subIds = subordinates.map(s => s.id)
-    whereClause = { userId: { in: [userId, ...subIds] } }
+  } else if (userRole !== 'ADMIN') {
+    whereClause = { user: { department: request.user.department } }
   }
 
   const attendances = await request.server.prisma.attendance.findMany({
-    where: whereClause
+    where: whereClause,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          department: true,
+          specialId: true
+        }
+      }
+    },
+    orderBy: { date: 'desc' }
   })
 
   return { success: true, attendances }
