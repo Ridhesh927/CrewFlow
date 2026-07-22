@@ -6,17 +6,32 @@ const getRatings = async (request, reply) => {
   
   if (userRole === 'INTERN') {
     whereClause = { userId: userId }
-  } else {
-    const subordinates = await request.server.prisma.user.findMany({
-      where: { managerId: userId },
-      select: { id: true }
-    })
-    const subIds = subordinates.map(s => s.id)
-    whereClause = { userId: { in: [userId, ...subIds] } }
+  } else if (userRole !== 'ADMIN') {
+    whereClause = { user: { department: request.user.department } }
   }
 
   const ratings = await request.server.prisma.rating.findMany({
-    where: whereClause
+    where: whereClause,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          department: true,
+          specialId: true
+        }
+      },
+      rater: {
+        select: {
+          id: true,
+          name: true,
+          role: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
   })
 
   return { success: true, ratings }
