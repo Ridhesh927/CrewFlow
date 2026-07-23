@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/store/useAuthStore";
+import Link from "next/link";
 import { Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,8 +96,12 @@ export function TopBar({ onMenuClick }) {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer w-full">
+              <Link href="/dashboard/profile">Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer w-full">
+              <Link href="/dashboard/settings">Settings</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
