@@ -1,9 +1,22 @@
 "use client";
 
 import { useAuthStore } from "@/store/useAuthStore";
-import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
-import { InternDashboard } from "@/components/dashboards/InternDashboard";
-import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
+import dynamic from "next/dynamic";
+
+const AdminDashboard = dynamic(
+  () => import("@/components/dashboards/AdminDashboard").then((mod) => mod.AdminDashboard),
+  { loading: () => <div className="h-96 w-full animate-pulse bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground mt-4">Loading dashboard...</div> }
+);
+
+const InternDashboard = dynamic(
+  () => import("@/components/dashboards/InternDashboard").then((mod) => mod.InternDashboard),
+  { loading: () => <div className="h-96 w-full animate-pulse bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground mt-4">Loading dashboard...</div> }
+);
+
+const ManagerDashboard = dynamic(
+  () => import("@/components/dashboards/ManagerDashboard").then((mod) => mod.ManagerDashboard),
+  { loading: () => <div className="h-96 w-full animate-pulse bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground mt-4">Loading dashboard...</div> }
+);
 import { motion } from "framer-motion";
 
 export default function DashboardPage() {
