@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Search, Calendar, Clock, AlertCircle } from "lucide-react";
-import { useGetAttendances } from "@/hooks/useAttendances";
+import { Loader2, Search, Calendar, Clock, AlertCircle, Edit2 } from "lucide-react";
+import { useGetAttendances, useMarkAttendance } from "@/hooks/useAttendances";
+import { useAuthStore } from "@/store/useAuthStore";
 
 import {
   Table,
@@ -20,15 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function AttendancePage() {
   const { data, isLoading } = useGetAttendances();
+  const { mutate: markAttendance, isPending: isMarking } = useMarkAttendance();
+  const currentUser = useAuthStore(state => state.user);
+  
+  const canEdit = currentUser?.role !== 'INTERN';
   
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [roleFilter, setRoleFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [dateFilter, setDateFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
   const attendances = data?.attendances || [];
@@ -36,47 +44,126 @@ export default function AttendancePage() {
   // Extract unique filter options
   const departments = ["ALL", ...new Set(attendances.map(a => a.user?.department).filter(Boolean))];
   const roles = ["ALL", ...new Set(attendances.map(a => a.user?.role).filter(Boolean))];
-  const statuses = ["ALL", ...new Set(attendances.map(a => a.status).filter(Boolean))];
   
-  const formatDate = (isoDate) => new Date(isoDate).toLocaleDateString(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-
-  // Apply filters
-  const filteredAttendances = attendances.filter(a => {
-    const matchesDept = departmentFilter === "ALL" || a.user?.department === departmentFilter;
-    const matchesRole = roleFilter === "ALL" || a.user?.role === roleFilter;
-    const matchesStatus = statusFilter === "ALL" || a.status === statusFilter;
-    
-    // Convert attendance date to YYYY-MM-DD for native date picker comparison
-    let aDateStr = null;
-    if (a.date) {
-      const dObj = new Date(a.date);
-      const y = dObj.getFullYear();
-      const m = String(dObj.getMonth() + 1).padStart(2, '0');
-      const d = String(dObj.getDate()).padStart(2, '0');
-      aDateStr = `${y}-${m}-${d}`;
-    }
-    const matchesDate = dateFilter === "ALL" || aDateStr === dateFilter;
-    
-    const matchesSearch = 
-      (a.user?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (a.user?.specialId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (a.remarks || "").toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDept && matchesRole && matchesStatus && matchesDate && matchesSearch;
-  });
-
-  const getStatusBadge = (status) => {
+  const getCellColor = (status) => {
     switch(status?.toUpperCase()) {
-      case 'PRESENT': return <Badge variant="default" className="bg-green-500/15 text-green-700 hover:bg-green-500/25 border-green-500/20">Present</Badge>;
-      case 'ABSENT': return <Badge variant="destructive" className="bg-red-500/15 text-red-700 hover:bg-red-500/25 border-red-500/20">Absent</Badge>;
-      case 'LATE': return <Badge variant="warning" className="bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-yellow-500/20">Late</Badge>;
-      case 'LEAVE': return <Badge variant="secondary" className="bg-blue-500/15 text-blue-700 hover:bg-blue-500/25 border-blue-500/20">On Leave</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      case 'PRESENT': return "bg-[#1E8E3E] text-white"; // Dark green
+      case 'ABSENT':
+      case 'LEAVE': return "bg-[#fce8e6] text-[#d93025]"; // Light Red bg, dark text
+      case 'INFORMED': return "bg-[#e6f4ea] text-[#137333]"; // Light green bg, dark text
+      case 'COMPLETED': return "bg-[#00BCD4] text-white"; // Cyan
+      case 'DISCONTINUED':
+      case 'TERMINATED': return "bg-[#8B0000] text-white"; // Dark Red
+      case 'LATE': return "bg-[#F9AB00] text-white"; // Yellow
+      default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const { uniqueDates, userRows } = useMemo(() => {
+    if (!attendances.length) return { uniqueDates: [], userRows: [] };
+
+    // Apply basic user filters before pivoting
+    const filteredAttendances = attendances.filter(a => {
+      const matchesDept = departmentFilter === "ALL" || a.user?.department === departmentFilter;
+      const matchesRole = roleFilter === "ALL" || a.user?.role === roleFilter;
+      const matchesSearch = 
+        (a.user?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (a.user?.specialId || "").toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesDept && matchesRole && matchesSearch;
+    });
+
+    // Extract unique dates, sorted chronologically
+    const dateSet = new Set();
+    filteredAttendances.forEach(a => {
+      if (a.date) {
+        dateSet.add(a.date.split('T')[0]); // Use YYYY-MM-DD
+      }
+    });
+    
+    // Sort oldest to newest (like the screenshot, left to right dates)
+    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b));
+
+    // Group by user
+    const userMap = new Map();
+    filteredAttendances.forEach(a => {
+      const u = a.user;
+      if (!u) return;
+      if (!userMap.has(u.id)) {
+        userMap.set(u.id, {
+          user: u,
+          attendanceByDate: {}
+        });
+      }
+      if (a.date) {
+        const dateKey = a.date.split('T')[0];
+        userMap.get(u.id).attendanceByDate[dateKey] = a;
+      }
+    });
+
+    return {
+      uniqueDates: sortedDates,
+      userRows: Array.from(userMap.values())
+    };
+  }, [attendances, departmentFilter, roleFilter, searchQuery]);
+
+  const formatDateHeader = (isoStr) => {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  const handleStatusChange = (userId, dateStr, newStatus) => {
+    markAttendance({ targetUserId: userId, date: dateStr, status: newStatus });
+  };
+
+  const editableStatuses = ["Present", "Absent", "Leave", "Informed", "Late", "Completed", "Terminated", "Discontinued"];
+
+  const renderCell = (row, dateStr) => {
+    const record = row.attendanceByDate[dateStr];
+    
+    let content = (
+      <div className="w-full h-8 flex items-center justify-center text-muted-foreground/50 hover:bg-muted/50 rounded transition-colors cursor-pointer">
+        -
+      </div>
+    );
+
+    if (record) {
+      content = (
+        <div className={`mx-auto w-full max-w-[110px] py-1.5 px-2 rounded-full text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider cursor-pointer hover:opacity-80 transition-opacity ${getCellColor(record.status)}`}>
+          {record.status}
+        </div>
+      );
+    }
+
+    if (!canEdit) {
+      return (
+        <TableCell key={dateStr} className="border-r p-1.5 text-center align-middle">
+          {record ? content : null}
+        </TableCell>
+      );
+    }
+
+    return (
+      <TableCell key={dateStr} className="border-r p-1.5 text-center align-middle relative group/cell">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="outline-none w-full h-full flex items-center justify-center border-0 p-0 m-0 bg-transparent cursor-pointer">
+            {content}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-36 z-[9999] p-2 bg-card border-border shadow-2xl">
+            {editableStatuses.map(s => (
+              <DropdownMenuItem 
+                key={s} 
+                className="cursor-pointer p-0 mb-1.5 focus:bg-transparent"
+                onClick={() => handleStatusChange(row.user.id, dateStr, s)}
+              >
+                <div className={`w-full text-center rounded-full py-2 px-3 font-semibold text-[11px] uppercase tracking-wider transition-all hover:opacity-80 shadow-sm ${getCellColor(s)}`}>
+                  {s}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    );
   };
 
   return (
@@ -88,15 +175,21 @@ export default function AttendancePage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Attendance Records</h1>
-          <p className="text-muted-foreground mt-1">View user daily attendance and status history.</p>
+          <p className="text-muted-foreground mt-1">View and manage daily attendance.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
+          {isMarking && (
+            <div className="flex items-center text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full mr-2">
+              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+              Saving...
+            </div>
+          )}
           <div className="flex items-center border border-input rounded-md px-3 bg-transparent h-10 w-full md:w-[220px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
             <Search className="h-4 w-4 text-muted-foreground shrink-0 mr-2" />
             <input
               type="search"
-              placeholder="Search user, ID or remarks..."
+              placeholder="Search user or ID..."
               className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground w-full h-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -122,89 +215,52 @@ export default function AttendancePage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {statuses.map(status => (
-                <SelectItem key={status} value={status}>{status === "ALL" ? "All Statuses" : status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center border border-input rounded-md px-3 bg-transparent h-10 w-[160px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-            <input
-              type="date"
-              className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground w-full h-full"
-              value={dateFilter === "ALL" ? "" : dateFilter}
-              onChange={(e) => setDateFilter(e.target.value || "ALL")}
-            />
-          </div>
         </div>
       </div>
 
-      <div className="border rounded-md overflow-hidden bg-card">
-        <Table>
+      <div className="border rounded-md overflow-x-auto bg-card shadow-sm pb-4 relative">
+        <Table className="w-full border-collapse" style={{ minWidth: `${410 + (uniqueDates.length * 120)}px` }}>
           <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="w-[250px]">User Details</TableHead>
-              <TableHead>Group & Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Remarks</TableHead>
+            <TableRow className="bg-muted hover:bg-muted">
+              <TableHead className="sticky left-0 bg-muted z-20 border-r w-[60px] text-center font-bold">SRNO.</TableHead>
+              <TableHead className="sticky left-[60px] bg-muted z-20 border-r w-[200px] font-bold">NAME</TableHead>
+              <TableHead className="sticky left-[260px] bg-muted z-20 border-r w-[150px] font-bold text-center">Contact Info</TableHead>
+              {uniqueDates.map(dateStr => (
+                <TableHead key={dateStr} className="border-r font-bold text-center w-[120px]">
+                  {formatDateHeader(dateStr)}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={3 + uniqueDates.length} className="h-32 text-center">
                   <div className="flex justify-center items-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">Loading attendance records...</span>
+                    <span className="ml-2 text-muted-foreground">Loading spreadsheet...</span>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filteredAttendances.length === 0 ? (
+            ) : userRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No attendance records found matching the current filters.
+                <TableCell colSpan={3 + uniqueDates.length} className="h-32 text-center text-muted-foreground">
+                  No records found matching the current filters.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAttendances.map((attendance) => (
-                <TableRow key={attendance.id} className="group">
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium truncate">{attendance.user?.name || "Unknown"}</span>
-                      <span className="text-xs text-muted-foreground truncate">{attendance.user?.email}</span>
-                      <span className="text-xs text-muted-foreground">{attendance.user?.specialId}</span>
-                    </div>
+              userRows.map((row, index) => (
+                <TableRow key={row.user.id} className="hover:bg-muted/50 group border-b">
+                  <TableCell className="sticky left-0 bg-card group-hover:bg-muted/50 z-10 border-r text-center font-medium">
+                    {index + 1}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 items-start">
-                      <Badge variant="outline" className="font-normal text-xs">{attendance.user?.department || "N/A"}</Badge>
-                      <Badge variant="secondary" className="text-[10px] uppercase">{attendance.user?.role || "N/A"}</Badge>
-                    </div>
+                  <TableCell className="sticky left-[60px] bg-card group-hover:bg-muted/50 z-10 border-r font-medium">
+                    {row.user.name || "Unknown"}
                   </TableCell>
-                  <TableCell>
-                    {getStatusBadge(attendance.status)}
+                  <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 border-r text-xs text-center text-muted-foreground">
+                    {row.user.phoneNo || row.user.specialId || "-"}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      {attendance.date ? formatDate(attendance.date) : "Unknown"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-[250px]">
-                    {attendance.remarks ? (
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <p className="text-sm truncate text-muted-foreground" title={attendance.remarks}>{attendance.remarks}</p>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
+                  {uniqueDates.map(dateStr => renderCell(row, dateStr))}
                 </TableRow>
               ))
             )}

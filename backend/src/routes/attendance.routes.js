@@ -6,6 +6,11 @@ async function attendanceRoutes(fastify, options) {
     { preValidation: [fastify.authenticate] },
     attendanceController.getAttendances
   )
+  fastify.post(
+    '/mark',
+    { preValidation: [fastify.authenticate] },
+    attendanceController.markAttendance
+  )
 }
 
 module.exports = attendanceRoutes

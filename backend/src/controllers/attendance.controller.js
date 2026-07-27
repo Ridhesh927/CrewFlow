@@ -30,4 +30,50 @@ const getAttendances = async (request, reply) => {
   return { success: true, attendances }
 }
 
-module.exports = { getAttendances }
+const markAttendance = async (request, reply) => {
+  const { targetUserId, date, status, remarks } = request.body
+  const requester = request.user
+
+  if (requester.role === 'INTERN') {
+    return reply.code(403).send({ error: 'Interns cannot mark attendance' })
+  }
+
+  const targetUser = await request.server.prisma.user.findUnique({
+    where: { id: targetUserId }
+  })
+
+  if (!targetUser) {
+    return reply.code(404).send({ error: 'Target user not found' })
+  }
+
+  if (requester.role !== 'ADMIN' && requester.department !== targetUser.department) {
+    return reply.code(403).send({ error: 'You can only mark attendance for users in your group' })
+  }
+
+  const attendanceDate = new Date(date)
+
+  const attendance = await request.server.prisma.attendance.upsert({
+    where: {
+      userId_date: {
+        userId: targetUserId,
+        date: attendanceDate
+      }
+    },
+    update: {
+      status,
+      remarks,
+      markedBy: requester.id
+    },
+    create: {
+      userId: targetUserId,
+      date: attendanceDate,
+      status,
+      remarks,
+      markedBy: requester.id
+    }
+  })
+
+  return { success: true, attendance }
+}
+
+module.exports = { getAttendances, markAttendance }
