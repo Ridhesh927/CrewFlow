@@ -10,12 +10,12 @@ export const useAuthStore = create(
       error: null,
       
       // Real login function using API
-      login: async (email, password) => {
+      login: async (identifier, password) => {
         try {
           set({ error: null });
           const data = await executeApiRequest('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ identifier, password }),
           });
           
           if (data.success) {

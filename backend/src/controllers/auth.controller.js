@@ -1,9 +1,20 @@
 const bcrypt = require('bcryptjs')
 
 const login = async (request, reply) => {
-  const { email, password } = request.body
-  const user = await request.server.prisma.user.findUnique({
-    where: { email: email.trim() }
+  const { identifier, email, password } = request.body
+  const loginIdentifier = (identifier || email || '').trim()
+
+  if (!loginIdentifier) {
+    return reply.code(400).send({ error: 'Email or ID is required' })
+  }
+
+  const user = await request.server.prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: loginIdentifier },
+        { specialId: loginIdentifier }
+      ]
+    }
   })
   
   if (!user) return reply.code(404).send({ error: 'User not found' })

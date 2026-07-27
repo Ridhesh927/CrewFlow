@@ -14,14 +14,14 @@ export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleStandardLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const success = await login(email, password);
+    const success = await login(identifier, password);
     if (success) {
       router.push("/dashboard");
     } else {
@@ -50,13 +50,13 @@ export default function LoginPage() {
         <Card className="border-border/50 shadow-xl shadow-black/5 backdrop-blur-sm bg-card/90">
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
-            <CardDescription>Enter your email below to login to your account</CardDescription>
+            <CardDescription>Enter your email or ID below to login to your account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleStandardLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Label htmlFor="identifier">Email or ID</Label>
+                <Input id="identifier" type="text" placeholder="m@example.com or ID" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
