@@ -29,7 +29,9 @@ fastify.register(cors, {
 })
 
 fastify.register(require('@fastify/multipart'), { attachFieldsToBody: false })
-
+fastify.register(require('@fastify/cookie'), {
+  secret: process.env.COOKIE_SECRET || 'my-cookie-secret',
+})
 fastify.register(prismaPlugin)
 fastify.register(jwtPlugin)
 

@@ -26,12 +26,21 @@ const login = async (request, reply) => {
   const isMatch = await bcrypt.compare(password, user.password)
   if (!isMatch) return reply.code(401).send({ error: 'Invalid password' })
 
-  const token = request.server.jwt.sign({ id: user.id, role: user.role })
+  const accessToken = request.server.jwt.sign({ id: user.id, role: user.role }, { expiresIn: '15m' })
+  const refreshToken = request.server.jwt.sign({ id: user.id, role: user.role }, { expiresIn: '7d' })
   
+  reply.setCookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 // 7 days
+  })
+
   // Don't send password back
   delete user.password
   
-  return { success: true, token, user }
+  return { success: true, token: accessToken, user }
 }
 
 const changePassword = async (request, reply) => {
@@ -57,4 +66,25 @@ const changePassword = async (request, reply) => {
   return { success: true, message: 'Password updated successfully' }
 }
 
-module.exports = { login, changePassword }
+const refresh = async (request, reply) => {
+  const refreshToken = request.cookies.refreshToken
+  if (!refreshToken) {
+    return reply.code(401).send({ error: 'Refresh token missing' })
+  }
+
+  try {
+    const decoded = request.server.jwt.verify(refreshToken)
+    const user = await request.server.prisma.user.findUnique({ where: { id: decoded.id } })
+    
+    if (!user || !user.isActive) {
+      return reply.code(401).send({ error: 'Invalid refresh token' })
+    }
+
+    const accessToken = request.server.jwt.sign({ id: user.id, role: user.role }, { expiresIn: '15m' })
+    return { success: true, token: accessToken }
+  } catch (err) {
+    return reply.code(401).send({ error: 'Invalid or expired refresh token' })
+  }
+}
+
+module.exports = { login, changePassword, refresh }

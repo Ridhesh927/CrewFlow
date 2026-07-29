@@ -36,7 +36,7 @@ model Attendance {
   id        Int      @id @default(autoincrement())
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime @db.Date
+  date      DateTime
   status    String   // Present, Absent, Late, Leave
   markedBy  Int
   remarks   String?
@@ -107,8 +107,8 @@ model LeaveRequest {
   id        Int         @id @default(autoincrement())
   userId    Int
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startDate DateTime    @db.Date
-  endDate   DateTime    @db.Date
+  startDate DateTime
+  endDate   DateTime
   reason    String
   status    LeaveStatus @default(PENDING)
   createdAt DateTime    @default(now())

@@ -76,7 +76,7 @@ export default function AttendancePage() {
     const dateSet = new Set();
     filteredAttendances.forEach(a => {
       if (a.date) {
-        dateSet.add(a.date.split('T')[0]); // Use YYYY-MM-DD
+        dateSet.add(new Date(a.date).toLocaleDateString('en-CA')); // Use YYYY-MM-DD in local timezone
       }
     });
     
@@ -95,7 +95,7 @@ export default function AttendancePage() {
         });
       }
       if (a.date) {
-        const dateKey = a.date.split('T')[0];
+        const dateKey = new Date(a.date).toLocaleDateString('en-CA');
         userMap.get(u.id).attendanceByDate[dateKey] = a;
       }
     });

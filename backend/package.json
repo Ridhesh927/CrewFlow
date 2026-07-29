@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "test": "jest",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ."
   },
   "prisma": {
@@ -16,6 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.1.0",
     "@fastify/multipart": "^10.0.0",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "cross-env": "^10.1.0",
     "eslint": "^10.7.0",
     "jest": "^30.4.2",
     "pino-pretty": "^13.1.3",
