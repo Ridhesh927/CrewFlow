@@ -1,7 +1,7 @@
-const { prisma } = require('../plugins/prisma');
 
 async function createLeaveRequest(request, reply) {
   try {
+    const prisma = request.server.prisma;
     const { startDate, endDate, reason } = request.body;
     const userId = request.user.id;
 
@@ -23,6 +23,7 @@ async function createLeaveRequest(request, reply) {
 
 async function getLeaveRequests(request, reply) {
   try {
+    const prisma = request.server.prisma;
     const { role, id } = request.user;
     let leaveRequests;
 
@@ -61,6 +62,7 @@ async function getLeaveRequests(request, reply) {
 
 async function approveLeaveRequest(request, reply) {
   try {
+    const prisma = request.server.prisma;
     const { id } = request.params;
     const { role, id: approverId } = request.user;
 
@@ -129,6 +131,7 @@ async function approveLeaveRequest(request, reply) {
 
 async function rejectLeaveRequest(request, reply) {
   try {
+    const prisma = request.server.prisma;
     const { id } = request.params;
     const { role, id: approverId } = request.user;
 
