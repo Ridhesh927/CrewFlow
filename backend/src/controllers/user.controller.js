@@ -84,7 +84,22 @@ const createUser = async (request, reply) => {
 }
 
 const getAllUsers = async (request, reply) => {
+  const currentUserId = request.user.id;
+  
+  const currentUserRecord = await request.server.prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { role: true, department: true }
+  });
+
+  let whereClause = {};
+
+  // If the user is not an ADMIN, restrict the view to their own department
+  if (currentUserRecord && currentUserRecord.role !== 'ADMIN' && currentUserRecord.department) {
+    whereClause.department = currentUserRecord.department;
+  }
+
   const users = await request.server.prisma.user.findMany({
+    where: whereClause,
     select: {
       id: true,
       email: true,
