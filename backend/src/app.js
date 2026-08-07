@@ -45,4 +45,8 @@ fastify.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
 fastify.register(announcementRoutes, { prefix: '/api/v1/announcements' })
 fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
 
+const errorHandler = require('./plugins/error.middleware')
+
+fastify.setErrorHandler(errorHandler)
+
 module.exports = fastify
