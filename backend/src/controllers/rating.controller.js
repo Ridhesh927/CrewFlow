@@ -1,40 +1,13 @@
+const ratingService = require('../services/rating.service');
+
 const getRatings = async (request, reply) => {
-  const userRole = request.user.role
-  const userId = request.user.id
-
-  let whereClause = {}
-  
-  if (userRole === 'INTERN') {
-    whereClause = { userId: userId }
-  } else if (userRole !== 'ADMIN') {
-    whereClause = { user: { department: request.user.department } }
+  try {
+    const ratings = await ratingService.getRatings(request.user);
+    return { success: true, ratings };
+  } catch (error) {
+    request.log.error(error);
+    reply.code(error.statusCode || 500).send({ error: error.message || 'Internal server error' });
   }
-
-  const ratings = await request.server.prisma.rating.findMany({
-    where: whereClause,
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          department: true,
-          specialId: true
-        }
-      },
-      rater: {
-        select: {
-          id: true,
-          name: true,
-          role: true
-        }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  })
-
-  return { success: true, ratings }
 }
 
 module.exports = { getRatings }

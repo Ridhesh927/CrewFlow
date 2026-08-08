@@ -1,212 +1,102 @@
-const bcrypt = require('bcryptjs')
+const userService = require('../services/user.service');
 
 const getDashboardData = async (request, reply) => {
-  const { id } = request.params
-  const userId = parseInt(id)
+  const { id } = request.params;
+  const userId = parseInt(id);
   
-  const user = await request.server.prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      subordinates: true,
-      attendances: true,
-      proofs: true,
-      ratingsGot: true
+  try {
+    const data = await userService.getDashboardData(userId);
+    return { success: true, ...data };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
     }
-  })
-  
-  if (!user) return reply.code(404).send({ error: 'User not found' })
-
-  // If Manager
-  let pendingProofs = []
-  if (['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(user.role)) {
-    const subIds = user.subordinates.map(s => s.id)
-    pendingProofs = await request.server.prisma.proof.findMany({
-      where: { internId: { in: subIds }, status: 'Pending' },
-      include: { task: { include: { subTasks: true } }, intern: true }
-    })
-  }
-
-  // Active Tasks
-  const activeTasks = await request.server.prisma.task.findMany({
-    where: { status: 'Active' },
-    include: { subTasks: true }
-  })
-
-  return { 
-    success: true, 
-    user,
-    pendingProofs,
-    activeTasks
+    throw error;
   }
 }
 
 const createUser = async (request, reply) => {
-  const { email, password, name, department, role, specialId, phoneNo } = request.body
-  const cleanEmail = email.trim()
-  const managerId = request.user.id // The creator is the manager
+  const managerId = request.user.id; // The creator is the manager
 
-  // Validate that email is unique
-  const existingEmail = await request.server.prisma.user.findUnique({
-    where: { email: cleanEmail }
-  })
-  if (existingEmail) {
-    return reply.code(400).send({ error: 'Email already exists' })
-  }
-
-  // Validate that specialId is unique
-  if (specialId) {
-    const existingSpecialId = await request.server.prisma.user.findUnique({
-      where: { specialId }
-    })
-    if (existingSpecialId) {
-      return reply.code(400).send({ error: 'Special ID already exists. It must be unique.' })
+  try {
+    const user = await userService.createUser(request.body, managerId);
+    return { success: true, user };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
     }
+    throw error;
   }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  const newUser = await request.server.prisma.user.create({
-    data: {
-      email: cleanEmail,
-      password: hashedPassword,
-      name,
-      department,
-      role: role || 'INTERN',
-      specialId,
-      phoneNo,
-      managerId
-    }
-  })
-
-  delete newUser.password
-  return { success: true, user: newUser }
 }
 
 const getAllUsers = async (request, reply) => {
   const currentUserId = request.user.id;
   
-  const currentUserRecord = await request.server.prisma.user.findUnique({
-    where: { id: currentUserId },
-    select: { role: true, department: true }
-  });
-
-  let whereClause = {};
-
-  // If the user is not an ADMIN, restrict the view to their own department
-  if (currentUserRecord && currentUserRecord.role !== 'ADMIN' && currentUserRecord.department) {
-    whereClause.department = currentUserRecord.department;
-  }
-
-  const users = await request.server.prisma.user.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      department: true,
-      specialId: true,
-      phoneNo: true,
-      isActive: true,
-      points: true,
-      manager: {
-        select: {
-          id: true,
-          name: true,
-          role: true
-        }
-      }
-    },
-    orderBy: {
-      createdAt: 'desc'
+  try {
+    const users = await userService.getAllUsers(currentUserId);
+    return { success: true, users };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
     }
-  })
-  
-  return { success: true, users }
+    throw error;
+  }
 }
 
 const promoteUser = async (request, reply) => {
-  const targetUserId = parseInt(request.params.id)
-  const { newRole } = request.body
-  const requesterRole = request.user.role
+  const targetUserId = parseInt(request.params.id);
+  const { newRole } = request.body;
+  const requesterRole = request.user.role;
 
-  const targetUser = await request.server.prisma.user.findUnique({
-    where: { id: targetUserId }
-  })
-
-  if (!targetUser) return reply.code(404).send({ error: 'User not found' })
-
-  // Promotion Rules
-  if (newRole === 'CAPTAIN') {
-    if (!['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(requesterRole)) {
-      return reply.code(403).send({ error: 'Forbidden: Cannot promote to Captain' })
+  try {
+    const user = await userService.promoteUser(targetUserId, newRole, requesterRole);
+    return { success: true, user };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
     }
-  } else if (newRole === 'TL') {
-    if (!['ADMIN', 'SENIOR_TL', 'TL'].includes(requesterRole)) {
-      return reply.code(403).send({ error: 'Forbidden: Cannot promote to TL' })
-    }
-  } else {
-    // Only admins can promote to higher roles
-    if (requesterRole !== 'ADMIN') {
-       return reply.code(403).send({ error: 'Forbidden: Only admin can promote to ' + newRole })
-    }
+    throw error;
   }
-
-  const updatedUser = await request.server.prisma.user.update({
-    where: { id: targetUserId },
-    data: { role: newRole }
-  })
-
-  delete updatedUser.password
-  return { success: true, user: updatedUser }
 }
 
 const getLeaderboard = async (request, reply) => {
-  const topUsers = await request.server.prisma.user.findMany({
-    orderBy: { points: 'desc' },
-    take: 10,
-    select: {
-      id: true,
-      name: true,
-      department: true,
-      role: true,
-      points: true
+  try {
+    const leaderboard = await userService.getLeaderboard();
+    return { success: true, leaderboard };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
     }
-  })
-  return { success: true, leaderboard: topUsers }
+    throw error;
+  }
 }
 
 const toggleUserStatus = async (request, reply) => {
-  const userId = parseInt(request.params.id)
+  const userId = parseInt(request.params.id);
   
-  if (userId === 1) {
-    return reply.code(403).send({ error: 'Cannot modify the primary admin account' })
+  try {
+    const isActive = await userService.toggleUserStatus(userId);
+    return { success: true, isActive };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
   }
-
-  const user = await request.server.prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return reply.code(404).send({ error: 'User not found' })
-
-  const updatedUser = await request.server.prisma.user.update({
-    where: { id: userId },
-    data: { isActive: !user.isActive }
-  })
-
-  return { success: true, isActive: updatedUser.isActive }
 }
 
 const deleteUser = async (request, reply) => {
-  const userId = parseInt(request.params.id)
+  const userId = parseInt(request.params.id);
   
-  if (userId === 1) {
-    return reply.code(403).send({ error: 'Cannot delete the primary admin account' })
+  try {
+    await userService.deleteUser(userId);
+    return { success: true };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
   }
-
-  await request.server.prisma.user.delete({
-    where: { id: userId }
-  })
-
-  return { success: true }
 }
 
 module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser }
