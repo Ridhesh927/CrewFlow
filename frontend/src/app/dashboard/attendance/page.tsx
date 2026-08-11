@@ -29,7 +29,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function AttendancePage() {
-  const { data, isLoading } = useGetAttendances();
+  const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const { data, isLoading } = useGetAttendances(startDate, endDate);
   const { mutate: markAttendance, isPending: isMarking } = useMarkAttendance();
   const currentUser = useAuthStore(state => state.user);
   
@@ -179,6 +182,17 @@ export default function AttendancePage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 mr-4">
+            <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
+              <span className="text-muted-foreground mr-2">From:</span>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent outline-none" />
+            </div>
+            <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
+              <span className="text-muted-foreground mr-2">To:</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent outline-none" />
+            </div>
+          </div>
+          
           {isMarking && (
             <div className="flex items-center text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full mr-2">
               <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />

@@ -33,7 +33,23 @@ async function getTeamAnalytics(request, reply) {
   }
 }
 
+async function getTrendsAnalytics(request, reply) {
+  try {
+    const { userId } = request.params;
+    const targetUserId = parseInt(userId);
+    const requester = request.user;
+
+    const data = await analyticsService.getTrendsAnalytics(targetUserId, requester);
+
+    reply.send(data);
+  } catch (error) {
+    request.log.error(error);
+    reply.code(error.statusCode || 500).send({ error: error.message || 'Internal server error' });
+  }
+}
+
 module.exports = {
   getUserAnalytics,
-  getTeamAnalytics
+  getTeamAnalytics,
+  getTrendsAnalytics
 };

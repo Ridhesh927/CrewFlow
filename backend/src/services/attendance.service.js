@@ -1,13 +1,19 @@
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
 
-const getAttendances = async (userRole, userId, userDepartment) => {
+const getAttendances = async (userRole, userId, userDepartment, startDate, endDate) => {
   let whereClause = {};
   
   if (userRole === 'INTERN') {
     whereClause = { userId: userId };
   } else if (userRole !== 'ADMIN') {
     whereClause = { user: { department: userDepartment } };
+  }
+
+  if (startDate || endDate) {
+    whereClause.date = {};
+    if (startDate) whereClause.date.gte = new Date(startDate);
+    if (endDate) whereClause.date.lte = new Date(endDate);
   }
 
   const attendances = await prisma.attendance.findMany({

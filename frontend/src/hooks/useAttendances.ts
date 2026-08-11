@@ -1,10 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { executeApiRequest } from '../services/api';
 
-export const useGetAttendances = () => {
+export const useGetAttendances = (startDate?: string, endDate?: string) => {
   return useQuery({
-    queryKey: ['attendances'],
-    queryFn: () => executeApiRequest('/attendances'),
+    queryKey: ['attendances', startDate, endDate],
+    queryFn: () => {
+      let url = '/attendances';
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (params.toString()) url += `?${params.toString()}`;
+      return executeApiRequest(url);
+    },
   });
 };
 

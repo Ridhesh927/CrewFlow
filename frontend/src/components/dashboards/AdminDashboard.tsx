@@ -12,11 +12,14 @@ export function AdminDashboard({ userId }) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const { activeTasks = [], pendingProofs = [] } = dashboardData || {};
+  const { activeTasks = [], pendingProofs = [], adminStats } = dashboardData || {};
   const { analytics = [] } = teamData || {};
 
-  const totalUsers = analytics.length;
-  const activeInterns = analytics.filter(a => a.user.role === 'INTERN').length;
+  const totalUsers = adminStats 
+    ? Object.values(adminStats.usersByRole || {}).reduce((a: any, b: any) => a + b, 0) 
+    : analytics.length;
+    
+  const activeInterns = adminStats?.activeInterns ?? analytics.filter(a => a.user.role === 'INTERN').length;
   
   // Calculate average attendance roughly
   let totalPresent = 0;
@@ -32,15 +35,16 @@ export function AdminDashboard({ userId }) {
   const avgAttendance = totalRecords > 0 ? Math.round((totalPresent / totalRecords) * 100) + "%" : "N/A";
 
   const stats = [
-    { title: "Total Users", value: totalUsers.toString(), icon: Users, description: "Registered users" },
+    { title: "Total Users", value: totalUsers.toString(), icon: Users, description: `${adminStats?.totalDepartments || 0} Departments` },
     { title: "Active Interns", value: activeInterns.toString(), icon: UserCheck, description: "Working interns" },
     { title: "Avg. Attendance", value: avgAttendance, icon: Clock, description: "Based on records" },
-    { title: "Pending Approvals", value: pendingProofs.length.toString(), icon: FileWarning, description: "Requires action" },
+    { title: "Pending Proofs", value: pendingProofs.length.toString(), icon: FileWarning, description: "Requires action" },
+    { title: "Pending Leaves", value: (adminStats?.pendingLeaves || 0).toString(), icon: Clock, description: "Leave requests" },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat, i) => (
           <Card key={i} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

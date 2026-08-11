@@ -4,8 +4,9 @@ const getAttendances = async (request, reply) => {
   const userRole = request.user.role;
   const userId = request.user.id;
   const userDepartment = request.user.department;
+  const { startDate, endDate } = request.query;
 
-  const attendances = await attendanceService.getAttendances(userRole, userId, userDepartment);
+  const attendances = await attendanceService.getAttendances(userRole, userId, userDepartment, startDate, endDate);
 
   return { success: true, attendances };
 }

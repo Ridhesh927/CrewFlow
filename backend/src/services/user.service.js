@@ -24,12 +24,42 @@ const getDashboardData = async (userId) => {
     });
   }
 
+  let taskQuery = { status: 'Active' };
+  
+  if (user.role === 'INTERN') {
+    taskQuery.OR = [
+      { targetAudience: 'All' },
+      { targetAudience: user.department || 'All' }
+    ];
+  }
+
   const activeTasks = await prisma.task.findMany({
-    where: { status: 'Active' },
+    where: taskQuery,
     include: { subTasks: true }
   });
 
-  return { user, pendingProofs, activeTasks };
+  let adminStats = null;
+  if (user.role === 'ADMIN') {
+    const allUsers = await prisma.user.findMany({ select: { role: true, department: true, isActive: true } });
+    const pendingLeavesCount = await prisma.leaveRequest.count({ where: { status: 'PENDING' } });
+    
+    const usersByRole = allUsers.reduce((acc, u) => {
+      acc[u.role] = (acc[u.role] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const departments = new Set(allUsers.filter(u => u.department).map(u => u.department));
+    const activeInterns = allUsers.filter(u => u.role === 'INTERN' && u.isActive).length;
+
+    adminStats = {
+      usersByRole,
+      totalDepartments: departments.size,
+      activeInterns,
+      pendingLeaves: pendingLeavesCount
+    };
+  }
+
+  return { user, pendingProofs, activeTasks, adminStats };
 };
 
 const createUser = async (userData, managerId) => {

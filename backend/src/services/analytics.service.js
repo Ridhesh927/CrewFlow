@@ -123,7 +123,36 @@ const getTeamAnalytics = async (requester, departmentQuery) => {
   return Array.from(analyticsMap.values());
 };
 
+const getTrendsAnalytics = async (targetUserId, requester) => {
+  const { role, id: requesterId } = requester;
+
+  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+  if (!targetUser) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (role !== 'ADMIN' && requesterId !== targetUserId && targetUser.managerId !== requesterId) {
+    throw new ApiError(403, 'Unauthorized to view this user\'s analytics');
+  }
+
+  // Get ratings grouped by month for trends
+  const ratingsByMonth = await prisma.rating.groupBy({
+    by: ['month'],
+    where: { userId: targetUserId },
+    _avg: { rating: true },
+    orderBy: { month: 'asc' }
+  });
+
+  const trends = ratingsByMonth.map(r => ({
+    month: r.month,
+    averageRating: r._avg.rating || 0
+  }));
+
+  return { trends };
+};
+
 module.exports = {
   getUserAnalytics,
-  getTeamAnalytics
+  getTeamAnalytics,
+  getTrendsAnalytics
 };

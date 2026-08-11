@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser } from "@/hooks/useUsers";
+import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser } from "@/hooks/useUsers";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,8 +47,21 @@ export default function UsersPage() {
   const toggleStatus = useToggleUserStatus();
   const deleteUser = useDeleteUser();
   const promoteUser = usePromoteUser();
+  const updateUser = useUpdateUser();
   const [open, setOpen] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: null, user: null, newRole: "" });
+  const [confirmDialog, setConfirmDialog] = useState<{ 
+    isOpen: boolean; 
+    type: 'delete' | 'status' | 'editRole' | 'editUser' | null; 
+    user: any | null; 
+    newRole: string;
+    editData: any;
+  }>({ 
+    isOpen: false, 
+    type: null, 
+    user: null, 
+    newRole: "",
+    editData: {}
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -285,15 +298,19 @@ export default function UsersPage() {
                             <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'editRole', user: u, newRole: u.role })}>
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'editUser', user: u, newRole: u.role, editData: { name: u.name, department: u.department, specialId: u.specialId || "", phoneNo: u.phoneNo || "", managerId: u.managerId ? String(u.managerId) : "none" } })}>
+                            <UserCog className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'editRole', user: u, newRole: u.role, editData: {} })}>
                             <UserCog className="mr-2 h-4 w-4" />
                             Edit Role
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'status', user: u })}>
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'status', user: u, newRole: "", editData: {} })}>
                             <Power className="mr-2 h-4 w-4" />
                             {u.isActive ? "Disable Account" : "Enable Account"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'delete', user: u })} className="text-red-600 focus:text-red-600">
+                          <DropdownMenuItem onClick={() => setConfirmDialog({ isOpen: true, type: 'delete', user: u, newRole: "", editData: {} })} className="text-red-600 focus:text-red-600">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Account
                           </DropdownMenuItem>
@@ -309,17 +326,22 @@ export default function UsersPage() {
       </div>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" })}>
+      <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirmDialog.type === 'delete' ? 'Delete Account' : confirmDialog.type === 'editRole' ? 'Edit User Role' : (confirmDialog.user?.isActive ? 'Disable Account' : 'Enable Account')}
+              {confirmDialog.type === 'delete' ? 'Delete Account' 
+                : confirmDialog.type === 'editRole' ? 'Edit User Role' 
+                : confirmDialog.type === 'editUser' ? 'Edit User Details'
+                : (confirmDialog.user?.isActive ? 'Disable Account' : 'Enable Account')}
             </DialogTitle>
             <DialogDescription>
               {confirmDialog.type === 'delete' 
                 ? `Are you sure you want to permanently delete ${confirmDialog.user?.name}'s account? All their data will be erased. This action cannot be undone.` 
                 : confirmDialog.type === 'editRole'
                 ? `Change the role for ${confirmDialog.user?.name}. Note: Your own role determines which roles you can assign.`
+                : confirmDialog.type === 'editUser'
+                ? `Update details for ${confirmDialog.user?.name}.`
                 : `Are you sure you want to ${confirmDialog.user?.isActive ? 'disable' : 'enable'} ${confirmDialog.user?.name}'s account?`}
             </DialogDescription>
           </DialogHeader>
@@ -342,19 +364,67 @@ export default function UsersPage() {
             </div>
           )}
 
+          {confirmDialog.type === 'editUser' && (
+            <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={confirmDialog.editData?.name} onChange={(e) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, name: e.target.value}})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input value={confirmDialog.editData?.department} onChange={(e) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, department: e.target.value}})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Manager</Label>
+                  <Select value={confirmDialog.editData?.managerId} onValueChange={(val) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, managerId: val}})}>
+                    <SelectTrigger><SelectValue placeholder="Select Manager" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Manager</SelectItem>
+                      {users.filter((u: any) => u.id !== confirmDialog.user?.id && ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(u.role)).map((u: any) => (
+                        <SelectItem key={u.id} value={String(u.id)}>{u.name} ({u.role})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Special ID</Label>
+                  <Input value={confirmDialog.editData?.specialId} onChange={(e) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, specialId: e.target.value}})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone No</Label>
+                  <Input value={confirmDialog.editData?.phoneNo} onChange={(e) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, phoneNo: e.target.value}})} />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" })}>Cancel</Button>
+            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })}>Cancel</Button>
             <Button 
               variant={confirmDialog.type === 'delete' ? "destructive" : "default"}
+              disabled={updateUser.isPending}
               onClick={() => {
                 if (confirmDialog.type === 'delete') {
                   deleteUser.mutate(confirmDialog.user.id);
                 } else if (confirmDialog.type === 'editRole') {
                   promoteUser.mutate({ id: confirmDialog.user.id, newRole: confirmDialog.newRole });
+                } else if (confirmDialog.type === 'editUser') {
+                  const payload = {
+                    ...confirmDialog.editData,
+                    managerId: confirmDialog.editData.managerId === "none" ? null : parseInt(confirmDialog.editData.managerId)
+                  };
+                  updateUser.mutate({ id: confirmDialog.user.id, data: payload }, {
+                    onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
+                  });
                 } else {
-                  toggleStatus.mutate(confirmDialog.user.id);
+                  toggleStatus.mutate(confirmDialog.user.id, {
+                    onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
+                  });
                 }
-                setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "" });
+                setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} });
               }}
             >
               {confirmDialog.type === 'delete' ? 'Delete' : 'Confirm'}

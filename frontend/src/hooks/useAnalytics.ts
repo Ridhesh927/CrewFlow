@@ -23,3 +23,11 @@ export function useTeamAnalytics(department = "") {
     queryFn: () => executeApiRequest(`/analytics/team${department ? `?department=${department}` : ''}`),
   });
 }
+
+export function useUserTrends(userId: number) {
+  return useQuery({
+    queryKey: ["analytics", "trends", userId],
+    queryFn: () => executeApiRequest(`/analytics/trends/${userId}`),
+    enabled: !!userId,
+  });
+}

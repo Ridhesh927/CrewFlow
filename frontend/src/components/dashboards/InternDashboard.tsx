@@ -5,15 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Upload, Star, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useDashboardMetrics, useUserAnalytics } from "@/hooks/useAnalytics";
+import { useDashboardMetrics, useUserAnalytics, useUserTrends } from "@/hooks/useAnalytics";
 import { useRouter } from "next/navigation";
 
 export function InternDashboard({ userId }: { userId: number }) {
   const router = useRouter();
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
   const { data: userData, isLoading: loadingUser } = useUserAnalytics(userId);
+  const { data: trendsData, isLoading: loadingTrends } = useUserTrends(userId);
 
-  if (loadingDash || loadingUser) {
+  if (loadingDash || loadingUser || loadingTrends) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -30,12 +31,16 @@ export function InternDashboard({ userId }: { userId: number }) {
   const rating = analytics?.averageRating?.toFixed(1) || "0.0";
   const tasksCompleted = analytics?.taskCompletions || 0;
 
-  // Personal analytics chart (could be built from historical ratings if API supported it)
-  // For MVP, we will use a simplified single point or mock trend to not break the chart structure completely,
-  // or we can just render the UI. Let's keep a placeholder chart until historical data is tracked.
-  const personalAnalytics = [
-    { name: 'Current', rating: parseFloat(rating), tasks: tasksCompleted }
-  ];
+  // Use historical trends from backend if available, otherwise fallback to current month/point
+  const personalAnalytics = (trendsData?.trends && trendsData.trends.length > 0)
+    ? trendsData.trends.map((t: any) => ({
+        name: t.month,
+        rating: t.averageRating,
+        tasks: tasksCompleted // if we want per-month tasks, we'd need that from backend. For now keep total or omit.
+      }))
+    : [
+        { name: 'Current', rating: parseFloat(rating), tasks: tasksCompleted }
+      ];
 
   return (
     <div className="space-y-6">
