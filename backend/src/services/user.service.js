@@ -186,6 +186,94 @@ const deleteUser = async (userId) => {
   });
 };
 
+const getUserById = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      manager: { select: { id: true, name: true, role: true } },
+      subordinates: { select: { id: true, name: true, role: true } },
+      attendances: true,
+      proofs: true,
+      ratingsGot: true
+    }
+  });
+  if (!user) throw new ApiError(404, 'User not found');
+  
+  // Calculate stats
+  let totalTasks = 0;
+  let approvedTasks = 0;
+  if (user.proofs) {
+    totalTasks = user.proofs.length;
+    approvedTasks = user.proofs.filter(p => p.status === 'Approved').length;
+  }
+  
+  let attendanceRate = 0;
+  if (user.attendances && user.attendances.length > 0) {
+    const presentCount = user.attendances.filter(a => a.status === 'Present').length;
+    attendanceRate = Math.round((presentCount / user.attendances.length) * 100);
+  }
+
+  let avgRating = 0;
+  if (user.ratingsGot && user.ratingsGot.length > 0) {
+    const totalRating = user.ratingsGot.reduce((sum, r) => sum + r.rating, 0);
+    avgRating = (totalRating / user.ratingsGot.length).toFixed(1);
+  }
+
+  return {
+    ...user,
+    stats: {
+      taskCompletions: approvedTasks,
+      totalTasks,
+      attendanceRate,
+      avgRating
+    }
+  };
+};
+
+const updateUser = async (targetUserId, data, requester) => {
+  const { name, department, phoneNo, specialId, managerId } = data;
+  
+  // Only ADMIN, SENIOR_TL, TL can update other users
+  if (!['ADMIN', 'SENIOR_TL', 'TL'].includes(requester.role)) {
+    throw new ApiError(403, 'Unauthorized to update users');
+  }
+
+  const updateData = {};
+  if (name) updateData.name = name;
+  if (department) updateData.department = department;
+  if (phoneNo) updateData.phoneNo = phoneNo;
+  if (specialId) updateData.specialId = specialId;
+  if (managerId) updateData.managerId = parseInt(managerId);
+
+  const user = await prisma.user.update({
+    where: { id: targetUserId },
+    data: updateData,
+    select: { id: true, name: true, email: true, role: true, department: true, specialId: true, phoneNo: true, managerId: true }
+  });
+
+  return user;
+};
+
+const updateProfile = async (userId, data, requester) => {
+  if (userId !== requester.id) {
+    throw new ApiError(403, 'You can only update your own profile');
+  }
+
+  const { name, phoneNo } = data;
+  
+  const updateData = {};
+  if (name) updateData.name = name;
+  if (phoneNo) updateData.phoneNo = phoneNo;
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: { id: true, name: true, email: true, role: true, department: true, specialId: true, phoneNo: true }
+  });
+
+  return user;
+};
+
 module.exports = {
   getDashboardData,
   createUser,
@@ -193,5 +281,8 @@ module.exports = {
   promoteUser,
   getLeaderboard,
   toggleUserStatus,
-  deleteUser
+  deleteUser,
+  getUserById,
+  updateUser,
+  updateProfile
 };

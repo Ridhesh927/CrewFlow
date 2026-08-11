@@ -82,3 +82,40 @@ export function usePromoteUser() {
     }
   });
 }
+
+export function useGetUserById(id: number) {
+  return useQuery({
+    queryKey: ["user", id],
+    queryFn: () => executeApiRequest(`/users/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      executeApiRequest(`/users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      executeApiRequest(`/users/${id}/profile`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
+    },
+  });
+}

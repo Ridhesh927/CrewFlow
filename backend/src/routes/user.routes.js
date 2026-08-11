@@ -6,7 +6,19 @@ async function userRoutes(fastify, options) {
   fastify.get('/:id/dashboard', { preValidation: [fastify.authenticate] }, userController.getDashboardData)
 
   fastify.get('/', { preValidation: [fastify.authenticate] }, userController.getAllUsers)
+  fastify.get('/:id', { preValidation: [fastify.authenticate] }, userController.getUserById)
   
+  fastify.put(
+    '/:id',
+    { preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL'])] },
+    userController.updateUser
+  )
+
+  fastify.patch(
+    '/:id/profile',
+    { preValidation: [fastify.authenticate] },
+    userController.updateProfile
+  )
   fastify.post(
     '/',
     { preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'])] },

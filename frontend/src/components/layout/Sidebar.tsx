@@ -10,7 +10,11 @@ import {
   Settings,
   LogOut,
   Building2,
-  Menu
+  Menu,
+  Megaphone,
+  FileText,
+  User,
+  Coffee
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,6 +38,10 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const getNavLinks = () => {
     const commonLinks = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Leave Requests", href: "/dashboard/leave", icon: Coffee },
+      { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
+      { name: "Documents", href: "/dashboard/documents", icon: FileText },
+      { name: "My Profile", href: "/dashboard/profile", icon: User },
     ];
 
     if (user.role === "ADMIN") {

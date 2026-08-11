@@ -99,4 +99,39 @@ const deleteUser = async (request, reply) => {
   }
 }
 
-module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser }
+const getUserById = async (request, reply) => {
+  const userId = parseInt(request.params.id);
+  try {
+    const user = await userService.getUserById(userId);
+    return { success: true, user };
+  } catch (error) {
+    if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
+    throw error;
+  }
+}
+
+const updateUser = async (request, reply) => {
+  const targetUserId = parseInt(request.params.id);
+  const requester = request.user;
+  try {
+    const user = await userService.updateUser(targetUserId, request.body, requester);
+    return { success: true, user };
+  } catch (error) {
+    if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
+    throw error;
+  }
+}
+
+const updateProfile = async (request, reply) => {
+  const userId = parseInt(request.params.id);
+  const requester = request.user;
+  try {
+    const user = await userService.updateProfile(userId, request.body, requester);
+    return { success: true, user };
+  } catch (error) {
+    if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
+    throw error;
+  }
+}
+
+module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile }
