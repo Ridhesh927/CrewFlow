@@ -1,13 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FileCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Users, FileCheck, AlertCircle, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useDashboardMetrics, useTeamAnalytics } from "@/hooks/useAnalytics";
+import { useApproveProof, useRejectProof } from "@/hooks/useTasks";
+import { useRouter } from "next/navigation";
 
-export function ManagerDashboard({ role, userId }) {
+export function ManagerDashboard({ role, userId }: { role: string; userId: number }) {
+  const router = useRouter();
+  const { mutate: approveProof, isPending: approving } = useApproveProof();
+  const { mutate: rejectProof, isPending: rejecting } = useRejectProof();
   const roleName = role === "SENIOR_TL" ? "Department" : role === "TL" ? "Team" : "Interns";
 
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
@@ -93,8 +98,24 @@ export function ManagerDashboard({ role, userId }) {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">Reject</Button>
-                      <Button size="sm">Approve</Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                         disabled={rejecting || approving}
+                         onClick={() => rejectProof(proof.id)}
+                       >
+                         {rejecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                         Reject
+                       </Button>
+                       <Button
+                         size="sm"
+                         disabled={approving || rejecting}
+                         onClick={() => approveProof(proof.id)}
+                       >
+                         {approving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                         Approve
+                       </Button>
                     </div>
                   </div>
                   {proof.task.subTasks && proof.task.subTasks.length > 0 && (
@@ -120,11 +141,9 @@ export function ManagerDashboard({ role, userId }) {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4 space-y-2">
-            <Button className="w-full justify-start" variant="outline">Mark Attendance</Button>
-            <Button className="w-full justify-start" variant="outline">Assign Ratings</Button>
-            {role !== "CAPTAIN" && (
-              <Button className="w-full justify-start" variant="outline">View Reports</Button>
-            )}
+            <Button className="w-full justify-start" variant="outline" onClick={() => router.push("/dashboard/attendance")}>Mark Attendance</Button>
+            <Button className="w-full justify-start" variant="outline" onClick={() => router.push("/dashboard/ratings")}>Assign Ratings</Button>
+            <Button className="w-full justify-start" variant="outline" onClick={() => router.push("/dashboard/tasks")}>Verify Proofs</Button>
           </CardContent>
         </Card>
       </div>

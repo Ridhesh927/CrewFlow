@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Upload, Star, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useDashboardMetrics, useUserAnalytics } from "@/hooks/useAnalytics";
+import { useRouter } from "next/navigation";
 
-export function InternDashboard({ userId }) {
+export function InternDashboard({ userId }: { userId: number }) {
+  const router = useRouter();
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
   const { data: userData, isLoading: loadingUser } = useUserAnalytics(userId);
 
@@ -89,7 +91,7 @@ export function InternDashboard({ userId }) {
                       <Badge variant="outline" className="text-amber-500 border-amber-500/50">
                         {task.status}
                       </Badge>
-                      <Button size="sm" variant="secondary" className="h-7 text-xs">
+                      <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => router.push('/dashboard/tasks')}>
                         <Upload className="mr-1 h-3 w-3" /> Submit Proof
                       </Button>
                     </div>

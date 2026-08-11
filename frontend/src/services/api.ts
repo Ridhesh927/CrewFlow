@@ -1,22 +1,28 @@
 // Base configuration for API calls
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-export const executeApiRequest = async (endpoint, options = {}) => {
+export const executeApiRequest = async (endpoint: string, options: RequestInit & { body?: any } = {}) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+
+  // Detect FormData — don't set Content-Type (browser sets it with boundary automatically)
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
   };
 
-  const method = (options.method || 'GET').toUpperCase();
+  const method = ((options.method as string) || 'GET').toUpperCase();
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Fastify body parser crashes if Content-Type is application/json but body is empty
-  if (!options.body && ['POST', 'PUT', 'PATCH'].includes(method)) {
+  if (!options.body && !isFormData && ['POST', 'PUT', 'PATCH'].includes(method)) {
     options.body = JSON.stringify({});
   }
 
-  // Remove Content-Type for methods that cannot have a body so Fastify doesn't try to parse an empty body
+  // Remove Content-Type for methods that cannot have a body
   if (['GET', 'HEAD', 'DELETE'].includes(method)) {
     delete headers['Content-Type'];
   }
@@ -29,11 +35,11 @@ export const executeApiRequest = async (endpoint, options = {}) => {
     ...options,
     headers,
   });
-  
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.error || error.message || 'API request failed');
   }
-  
+
   return response.json();
 };
