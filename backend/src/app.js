@@ -23,7 +23,7 @@ const announcementRoutes = require('./routes/announcement.routes')
 const documentRoutes = require('./routes/document.routes')
 
 fastify.register(cors, { 
-  origin: '*',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 })
@@ -31,6 +31,10 @@ fastify.register(cors, {
 fastify.register(require('@fastify/multipart'), { attachFieldsToBody: false })
 fastify.register(require('@fastify/cookie'), {
   secret: process.env.COOKIE_SECRET || 'my-cookie-secret',
+})
+fastify.register(require('@fastify/rate-limit'), {
+  max: 100,
+  timeWindow: '1 minute'
 })
 fastify.register(prismaPlugin)
 fastify.register(jwtPlugin)

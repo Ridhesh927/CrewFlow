@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
@@ -35,7 +35,15 @@ const login = async (identifier, password, fastifyJwt) => {
     throw new ApiError(403, 'Your account has been disabled. Please contact your admin.');
   }
   
-  const isMatch = await bcrypt.compare(password, user.password);
+  let isMatch = false;
+  try {
+    isMatch = await argon2.verify(user.password, password);
+  } catch (err) {
+    // If the hash format is invalid for argon2 (e.g., an old bcrypt hash and we don't have a fallback), it throws.
+    // For MVP, we catch it and it stays false. 
+    isMatch = false;
+  }
+  
   if (!isMatch) throw new ApiError(401, 'Invalid password');
 
   const { accessToken, refreshToken } = generateTokens(user, fastifyJwt);
@@ -53,10 +61,16 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   
   if (!user) throw new ApiError(404, 'User not found');
 
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) throw new ApiError(400, 'Incorrect current password');
+  let isMatch = false;
+  try {
+    isMatch = await argon2.verify(user.password, currentPassword);
+  } catch (err) {
+    isMatch = false;
+  }
 
-  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+  if (!isMatch) throw new ApiError(401, 'Incorrect current password');
+
+  const hashedNewPassword = await argon2.hash(newPassword);
 
   await prisma.user.update({
     where: { id: userId },

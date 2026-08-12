@@ -1,9 +1,11 @@
-const app = require('./src/app')
+const env = require('./src/env');
+const app = require('./src/app');
 
 const start = async () => {
   try {
-    await app.listen({ port: 3001, host: '0.0.0.0' })
-    app.log.info(`Backend listening on http://localhost:3001`)
+    const port = parseInt(env.PORT, 10);
+    await app.listen({ port, host: '0.0.0.0' })
+    app.log.info(`Backend listening on http://localhost:${port}`)
   } catch (err) {
     app.log.error(err)
     process.exit(1)

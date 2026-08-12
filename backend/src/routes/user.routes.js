@@ -1,5 +1,7 @@
 const userController = require('../controllers/user.controller')
 const { requireRole, requireHierarchy } = require('../plugins/auth.middleware')
+const validate = require('../plugins/validate.middleware')
+const { createUserSchema, updateUserSchema } = require('../schemas/user.schema')
 
 async function userRoutes(fastify, options) {
   fastify.get('/leaderboard', { preValidation: [fastify.authenticate] }, userController.getLeaderboard)
@@ -10,7 +12,10 @@ async function userRoutes(fastify, options) {
   
   fastify.put(
     '/:id',
-    { preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL'])] },
+    { 
+      preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL'])],
+      preHandler: [validate(updateUserSchema)]
+    },
     userController.updateUser
   )
 
@@ -21,7 +26,10 @@ async function userRoutes(fastify, options) {
   )
   fastify.post(
     '/',
-    { preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'])] },
+    { 
+      preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'])],
+      preHandler: [validate(createUserSchema)]
+    },
     userController.createUser
   )
 

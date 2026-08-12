@@ -1,4 +1,6 @@
 const attendanceController = require('../controllers/attendance.controller')
+const validate = require('../plugins/validate.middleware')
+const { markAttendanceSchema } = require('../schemas/attendance.schema')
 
 async function attendanceRoutes(fastify, options) {
   fastify.get(
@@ -8,7 +10,10 @@ async function attendanceRoutes(fastify, options) {
   )
   fastify.post(
     '/mark',
-    { preValidation: [fastify.authenticate] },
+    { 
+      preValidation: [fastify.authenticate],
+      preHandler: [validate(markAttendanceSchema)]
+    },
     attendanceController.markAttendance
   )
 }

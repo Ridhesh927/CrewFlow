@@ -29,7 +29,12 @@ export const useAuthStore = create(
         }
       },
       
-      logout: () => {
+      logout: async () => {
+        try {
+          await executeApiRequest('/auth/logout', { method: 'POST' });
+        } catch (e) {
+          console.error("Logout API failed", e);
+        }
         localStorage.removeItem('jwt_token');
         set({ user: null, isAuthenticated: false, error: null });
       },

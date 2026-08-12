@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const argon2 = require('argon2');
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
 
@@ -82,7 +82,7 @@ const createUser = async (userData, managerId) => {
     }
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await argon2.hash(password);
 
   const newUser = await prisma.user.create({
     data: {

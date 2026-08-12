@@ -62,4 +62,11 @@ const refresh = async (request, reply) => {
   }
 }
 
-module.exports = { login, changePassword, refresh }
+const logout = async (request, reply) => {
+  reply.clearCookie('refreshToken', {
+    path: '/'
+  });
+  return { success: true, message: 'Logged out successfully' };
+}
+
+module.exports = { login, changePassword, refresh, logout }

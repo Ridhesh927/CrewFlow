@@ -1,5 +1,7 @@
 const taskController = require('../controllers/task.controller')
 const { requireRole } = require('../plugins/auth.middleware')
+const validate = require('../plugins/validate.middleware')
+const { createTaskSchema } = require('../schemas/task.schema')
 
 async function taskRoutes(fastify, options) {
   // Get all tasks (role-scoped)
@@ -12,7 +14,10 @@ async function taskRoutes(fastify, options) {
   // Create a new task (managers only)
   fastify.post(
     '/',
-    { preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'])] },
+    { 
+      preValidation: [fastify.authenticate, requireRole(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'])],
+      preHandler: [validate(createTaskSchema)]
+    },
     taskController.createTask
   )
 

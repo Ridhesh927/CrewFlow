@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcryptjs')
+const argon2 = require('argon2')
 require('dotenv').config()
 
 const prisma = new PrismaClient()
@@ -67,9 +67,9 @@ async function main() {
   const seniorTlPassword = process.env.SENIORTL_PASSWORD || 'admin@123'
   const seedPassword = process.env.SEED_PASSWORD || 'password123'
 
-  const adminHashed = await bcrypt.hash(adminPassword, 10)
-  const seniorTlHashed = await bcrypt.hash(seniorTlPassword, 10)
-  const hashedPassword = await bcrypt.hash(seedPassword, 10)
+  const adminHashed = await argon2.hash(adminPassword)
+  const seniorTlHashed = await argon2.hash(seniorTlPassword)
+  const hashedPassword = await argon2.hash(seedPassword)
 
   // 1. Create 5 Admins
   console.log('👤 Creating 5 Admin users...')
