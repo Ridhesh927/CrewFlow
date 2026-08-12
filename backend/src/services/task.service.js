@@ -1,6 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
+const notificationService = require('./notification.service');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -63,6 +64,25 @@ const createTask = async (taskData) => {
     },
     include: { subTasks: true }
   });
+
+  // Notify relevant users (interns)
+  let userWhereClause = { role: 'INTERN', isActive: true };
+  if (targetAudience !== 'All') {
+    userWhereClause.department = targetAudience;
+  }
+  
+  const targetUsers = await prisma.user.findMany({
+    where: userWhereClause,
+    select: { id: true }
+  });
+
+  for (const u of targetUsers) {
+    await notificationService.createNotification(
+      u.id,
+      'INFO',
+      `A new task has been assigned to you: "${task.title}"`
+    );
+  }
 
   return task;
 };
@@ -163,7 +183,8 @@ const getPendingProofs = async (user) => {
 const approveProof = async (proofId) => {
   const proof = await prisma.proof.update({
     where: { id: proofId },
-    data: { status: 'Approved' }
+    data: { status: 'Approved' },
+    include: { task: { select: { title: true } } }
   });
 
   await prisma.user.update({
@@ -177,7 +198,8 @@ const approveProof = async (proofId) => {
 const rejectProof = async (proofId) => {
   const proof = await prisma.proof.update({
     where: { id: proofId },
-    data: { status: 'Rejected' }
+    data: { status: 'Rejected' },
+    include: { task: { select: { title: true } } }
   });
 
   return proof;

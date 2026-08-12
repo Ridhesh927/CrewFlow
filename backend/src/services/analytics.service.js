@@ -1,5 +1,6 @@
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
+const { Parser } = require('json2csv');
 
 const getUserAnalytics = async (targetUserId, requester) => {
   const { role, id: requesterId } = requester;
@@ -151,8 +152,79 @@ const getTrendsAnalytics = async (targetUserId, requester) => {
   return { trends };
 };
 
+const exportAttendanceCsv = async (requester, startDate, endDate) => {
+  const { role, department } = requester;
+  
+  let whereClause = {};
+  if (role !== 'ADMIN') {
+    whereClause.user = { department };
+  }
+
+  if (startDate && endDate) {
+    whereClause.date = {
+      gte: new Date(startDate),
+      lte: new Date(endDate)
+    };
+  }
+
+  const attendances = await prisma.attendance.findMany({
+    where: whereClause,
+    include: {
+      user: { select: { name: true, email: true, department: true } }
+    },
+    orderBy: { date: 'desc' }
+  });
+
+  const data = attendances.map(a => ({
+    Name: a.user.name,
+    Email: a.user.email,
+    Department: a.user.department,
+    Date: a.date.toISOString().split('T')[0],
+    Status: a.status,
+    Remarks: a.remarks || ''
+  }));
+
+  if (data.length === 0) return '';
+  const parser = new Parser();
+  return parser.parse(data);
+};
+
+const exportRatingsCsv = async (requester) => {
+  const { role, department } = requester;
+  
+  let whereClause = {};
+  if (role !== 'ADMIN') {
+    whereClause.user = { department };
+  }
+
+  const ratings = await prisma.rating.findMany({
+    where: whereClause,
+    include: {
+      user: { select: { name: true, email: true, department: true } },
+      rater: { select: { name: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const data = ratings.map(r => ({
+    Name: r.user.name,
+    Email: r.user.email,
+    Department: r.user.department,
+    Month: r.month,
+    Rating: r.rating,
+    Comments: r.comments,
+    Rater: r.rater.name
+  }));
+
+  if (data.length === 0) return '';
+  const parser = new Parser();
+  return parser.parse(data);
+};
+
 module.exports = {
   getUserAnalytics,
   getTeamAnalytics,
-  getTrendsAnalytics
+  getTrendsAnalytics,
+  exportAttendanceCsv,
+  exportRatingsCsv
 };

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { executeApiRequest } from "../services/api";
+import { toast } from "sonner";
 
 export function useLeaderboard() {
   return useQuery({
@@ -41,8 +42,8 @@ export function useToggleUserStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "all"] });
     },
-    onError: (err) => {
-      alert("Failed to toggle status: " + err.message);
+    onError: (err: any) => {
+      toast.error("Failed to toggle status", { description: err.message });
       console.error(err);
     }
   });
@@ -58,8 +59,8 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "all"] });
     },
-    onError: (err) => {
-      alert("Failed to delete user: " + err.message);
+    onError: (err: any) => {
+      toast.error("Failed to delete user", { description: err.message });
       console.error(err);
     }
   });
@@ -76,8 +77,8 @@ export function usePromoteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "all"] });
     },
-    onError: (err) => {
-      alert("Failed to change role: " + err.message);
+    onError: (err: any) => {
+      toast.error("Failed to change role", { description: err.message });
       console.error(err);
     }
   });
@@ -117,5 +118,25 @@ export function useUpdateProfile() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
     },
+  });
+}
+
+export function useBulkUpdateDepartment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userIds, department }: { userIds: number[]; department: string }) =>
+      executeApiRequest(`/users/bulk-department`, {
+        method: "PUT",
+        body: JSON.stringify({ userIds, department }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics", "team"] });
+    },
+    onError: (err: any) => {
+      toast.error("Failed to update departments", { description: err.message });
+      console.error(err);
+    }
   });
 }

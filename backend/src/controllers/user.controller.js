@@ -1,4 +1,5 @@
 const userService = require('../services/user.service');
+const auditService = require('../services/audit.service');
 
 const getDashboardData = async (request, reply) => {
   const { id } = request.params;
@@ -20,6 +21,16 @@ const createUser = async (request, reply) => {
 
   try {
     const user = await userService.createUser(request.body, managerId);
+    
+    await auditService.logAction({
+      userId: managerId,
+      action: 'USER_CREATED',
+      resource: 'User',
+      resourceId: user.id,
+      details: { email: user.email, role: user.role },
+      ipAddress: request.ip
+    });
+
     return { success: true, user };
   } catch (error) {
     if (error.statusCode) {
@@ -50,6 +61,16 @@ const promoteUser = async (request, reply) => {
 
   try {
     const user = await userService.promoteUser(targetUserId, newRole, requesterRole);
+
+    await auditService.logAction({
+      userId: request.user.id,
+      action: 'USER_PROMOTED',
+      resource: 'User',
+      resourceId: user.id,
+      details: { newRole },
+      ipAddress: request.ip
+    });
+
     return { success: true, user };
   } catch (error) {
     if (error.statusCode) {
@@ -76,6 +97,16 @@ const toggleUserStatus = async (request, reply) => {
   
   try {
     const isActive = await userService.toggleUserStatus(userId);
+
+    await auditService.logAction({
+      userId: request.user.id,
+      action: 'USER_STATUS_TOGGLED',
+      resource: 'User',
+      resourceId: userId,
+      details: { isActive },
+      ipAddress: request.ip
+    });
+
     return { success: true, isActive };
   } catch (error) {
     if (error.statusCode) {
@@ -90,6 +121,15 @@ const deleteUser = async (request, reply) => {
   
   try {
     await userService.deleteUser(userId);
+
+    await auditService.logAction({
+      userId: request.user.id,
+      action: 'USER_DELETED',
+      resource: 'User',
+      resourceId: userId,
+      ipAddress: request.ip
+    });
+
     return { success: true };
   } catch (error) {
     if (error.statusCode) {
@@ -134,4 +174,26 @@ const updateProfile = async (request, reply) => {
   }
 }
 
-module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile }
+const bulkUpdateDepartment = async (request, reply) => {
+  const { userIds, department } = request.body;
+  const requester = request.user;
+  
+  try {
+    const result = await userService.bulkUpdateDepartment(userIds, department, requester.id);
+    
+    await auditService.logAction({
+      userId: requester.id,
+      action: 'USERS_DEPARTMENT_UPDATED',
+      resource: 'User',
+      details: { updatedCount: result.updatedCount, newDepartment: department },
+      ipAddress: request.ip
+    });
+
+    return { success: true, ...result };
+  } catch (error) {
+    if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
+    throw error;
+  }
+}
+
+module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile, bulkUpdateDepartment }

@@ -1,5 +1,6 @@
 const prisma = require('../plugins/prisma');
 const ApiError = require('../plugins/ApiError');
+const notificationService = require('./notification.service');
 
 // BFS traversal to check if targetUserId is a subordinate of managerId
 const checkIsSubordinate = async (managerId, targetUserId) => {
@@ -115,6 +116,12 @@ const createRating = async (ratingData, rater) => {
       rater: { select: { id: true, name: true, role: true } }
     }
   });
+
+  await notificationService.createNotification(
+    newRating.userId,
+    'INFO',
+    `You have received a new rating of ${ratingNum} for ${month} from ${newRating.rater?.name || 'your manager'}.`
+  );
 
   return newRating;
 };

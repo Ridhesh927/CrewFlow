@@ -14,7 +14,8 @@ import {
   Megaphone,
   FileText,
   User,
-  Coffee
+  Coffee,
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -41,7 +42,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
       { name: "Leave Requests", href: "/dashboard/leave", icon: Coffee },
       { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
       { name: "Documents", href: "/dashboard/documents", icon: FileText },
-      { name: "My Profile", href: "/dashboard/profile", icon: User },
+      { name: "Profile & Settings", href: "/dashboard/profile", icon: User },
     ];
 
     if (user.role === "ADMIN") {
@@ -51,7 +52,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         { name: "All Attendance", href: "/dashboard/attendance", icon: CalendarDays },
         { name: "Ratings Overview", href: "/dashboard/ratings", icon: Star },
         { name: "Campaigns", href: "/dashboard/tasks", icon: CheckSquare },
-        { name: "Settings", href: "/dashboard/settings", icon: Settings },
+        { name: "Audit Logs", href: "/dashboard/audit", icon: Shield },
       ];
     }
     

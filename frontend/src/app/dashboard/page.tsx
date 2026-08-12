@@ -17,9 +17,12 @@ const ManagerDashboard = dynamic(
   () => import("@/components/dashboards/ManagerDashboard").then((mod) => mod.ManagerDashboard),
   { loading: () => <div className="h-96 w-full animate-pulse bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground mt-4">Loading dashboard...</div> }
 );
+import { TopBar } from "@/components/layout/TopBar";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { motion } from "framer-motion";
 
 export default function DashboardPage() {
+  useDocumentTitle("Dashboard");
   const user = useAuthStore((state) => state.user);
 
   if (!user) return null;

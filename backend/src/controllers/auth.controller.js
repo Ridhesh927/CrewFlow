@@ -1,4 +1,5 @@
 const authService = require('../services/auth.service');
+const auditService = require('../services/audit.service');
 
 const login = async (request, reply) => {
   const { identifier, email, password } = request.body;
@@ -7,6 +8,14 @@ const login = async (request, reply) => {
   try {
     const { accessToken, refreshToken, user } = await authService.login(loginIdentifier, password, request.server.jwt);
     
+    await auditService.logAction({
+      userId: user.id,
+      action: 'USER_LOGIN',
+      resource: 'User',
+      resourceId: user.id,
+      ipAddress: request.ip
+    });
+
     reply.setCookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -17,6 +26,13 @@ const login = async (request, reply) => {
 
     return { success: true, token: accessToken, user };
   } catch (error) {
+    await auditService.logAction({
+      action: 'FAILED_LOGIN',
+      resource: 'User',
+      details: { identifier: loginIdentifier, reason: error.message },
+      ipAddress: request.ip
+    });
+
     if (error.statusCode) {
       return reply.code(error.statusCode).send({ error: error.message });
     }

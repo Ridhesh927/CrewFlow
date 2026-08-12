@@ -1,4 +1,4 @@
-const { getUserAnalytics, getTeamAnalytics, getTrendsAnalytics } = require('../controllers/analytics.controller');
+const { getUserAnalytics, getTeamAnalytics, getTrendsAnalytics, exportAttendanceCsv, exportRatingsCsv } = require('../controllers/analytics.controller');
 const { requireRole } = require('../plugins/auth.middleware');
 
 async function analyticsRoutes(fastify, options) {
@@ -10,6 +10,12 @@ async function analyticsRoutes(fastify, options) {
 
   // Fetch rating trends for a user
   fastify.get('/trends/:userId', { preValidation: [fastify.authenticate] }, getTrendsAnalytics);
+
+  // Export Attendance CSV
+  fastify.get('/export/attendance', { preValidation: [fastify.authenticate, requireRole(['TL', 'SENIOR_TL', 'CAPTAIN', 'ADMIN'])] }, exportAttendanceCsv);
+
+  // Export Ratings CSV
+  fastify.get('/export/ratings', { preValidation: [fastify.authenticate, requireRole(['TL', 'SENIOR_TL', 'CAPTAIN', 'ADMIN'])] }, exportRatingsCsv);
 }
 
 module.exports = analyticsRoutes;

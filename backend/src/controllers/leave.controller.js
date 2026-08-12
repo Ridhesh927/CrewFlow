@@ -1,4 +1,5 @@
 const leaveService = require('../services/leave.service');
+const notificationService = require('../services/notification.service');
 
 async function createLeaveRequest(request, reply) {
   try {
@@ -29,6 +30,12 @@ async function approveLeaveRequest(request, reply) {
     const { id } = request.params;
     const leaveRequest = await leaveService.approveLeaveRequest(id, request.user);
 
+    await notificationService.createNotification(
+      leaveRequest.userId,
+      'SUCCESS',
+      `Your leave request from ${new Date(leaveRequest.startDate).toLocaleDateString()} to ${new Date(leaveRequest.endDate).toLocaleDateString()} has been approved.`
+    );
+
     reply.send({ message: 'Leave request approved', leaveRequest });
   } catch (error) {
     request.log.error(error);
@@ -40,6 +47,12 @@ async function rejectLeaveRequest(request, reply) {
   try {
     const { id } = request.params;
     const leaveRequest = await leaveService.rejectLeaveRequest(id, request.user);
+
+    await notificationService.createNotification(
+      leaveRequest.userId,
+      'WARNING',
+      `Your leave request from ${new Date(leaveRequest.startDate).toLocaleDateString()} to ${new Date(leaveRequest.endDate).toLocaleDateString()} has been rejected.`
+    );
 
     reply.send({ message: 'Leave request rejected', leaveRequest });
   } catch (error) {

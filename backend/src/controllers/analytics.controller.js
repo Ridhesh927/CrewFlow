@@ -48,8 +48,41 @@ async function getTrendsAnalytics(request, reply) {
   }
 }
 
+async function exportAttendanceCsv(request, reply) {
+  try {
+    const requester = request.user;
+    const { startDate, endDate } = request.query;
+
+    const csvData = await analyticsService.exportAttendanceCsv(requester, startDate, endDate);
+
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', 'attachment; filename="attendance_export.csv"');
+    reply.send(csvData);
+  } catch (error) {
+    request.log.error(error);
+    reply.code(error.statusCode || 500).send({ error: error.message || 'Internal server error' });
+  }
+}
+
+async function exportRatingsCsv(request, reply) {
+  try {
+    const requester = request.user;
+    
+    const csvData = await analyticsService.exportRatingsCsv(requester);
+
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', 'attachment; filename="ratings_export.csv"');
+    reply.send(csvData);
+  } catch (error) {
+    request.log.error(error);
+    reply.code(error.statusCode || 500).send({ error: error.message || 'Internal server error' });
+  }
+}
+
 module.exports = {
   getUserAnalytics,
   getTeamAnalytics,
-  getTrendsAnalytics
+  getTrendsAnalytics,
+  exportAttendanceCsv,
+  exportRatingsCsv
 };

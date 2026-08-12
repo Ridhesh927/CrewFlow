@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser } from "@/hooks/useUsers";
+import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment } from "@/hooks/useUsers";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,8 +40,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UsersPage() {
+  useDocumentTitle("User Management");
   const currentUser = useAuthStore((state) => state.user);
   const { data, isLoading } = useGetAllUsers();
   const createUser = useCreateUser();
@@ -77,6 +80,41 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [pointsSort, setPointsSort] = useState("DEFAULT");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [bulkDepartment, setBulkDepartment] = useState("");
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const bulkUpdateDepartment = useBulkUpdateDepartment();
+
+  const handleSelectUser = (id: number) => {
+    setSelectedUserIds(prev => 
+      prev.includes(id) ? prev.filter(userId => userId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedUserIds(filteredUsers.map((u: any) => u.id));
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const handleBulkUpdate = () => {
+    if (selectedUserIds.length === 0 || !bulkDepartment) return;
+    bulkUpdateDepartment.mutate(
+      { userIds: selectedUserIds, department: bulkDepartment },
+      {
+        onSuccess: () => {
+          setShowBulkDialog(false);
+          setSelectedUserIds([]);
+          setBulkDepartment("");
+        }
+      }
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -110,6 +148,14 @@ export default function UsersPage() {
   } else if (pointsSort === "LOW_TO_HIGH") {
     filteredUsers.sort((a, b) => (a.points || 0) - (b.points || 0));
   }
+
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [departmentFilter, roleFilter, statusFilter, pointsSort, searchQuery]);
 
   return (
     <motion.div
@@ -174,6 +220,39 @@ export default function UsersPage() {
               <SelectItem value="LOW_TO_HIGH">Points: Low to High</SelectItem>
             </SelectContent>
           </Select>
+
+          {currentUser?.role === 'ADMIN' && selectedUserIds.length > 0 && (
+            <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+              <DialogTrigger render={<Button variant="secondary" />}>
+                <UserCog className="mr-2 h-4 w-4" /> Bulk Group Update ({selectedUserIds.length})
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bulk Update Group</DialogTitle>
+                  <DialogDescription>
+                    Move {selectedUserIds.length} selected users to a new group (department).
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>New Group / Department</Label>
+                    <Input 
+                      value={bulkDepartment} 
+                      onChange={(e) => setBulkDepartment(e.target.value)} 
+                      placeholder="e.g. Design Team" 
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <Button variant="outline" onClick={() => setShowBulkDialog(false)}>Cancel</Button>
+                    <Button onClick={handleBulkUpdate} disabled={bulkUpdateDepartment.isPending || !bulkDepartment}>
+                      {bulkUpdateDepartment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Update Groups
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button />}>
@@ -251,8 +330,12 @@ export default function UsersPage() {
       
       <div className="rounded-md border bg-card">
         {isLoading ? (
-          <div className="flex h-48 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="p-4 space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ))}
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col h-48 items-center justify-center text-muted-foreground">
@@ -263,6 +346,16 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {currentUser?.role === 'ADMIN' && (
+                  <TableHead className="w-[40px]">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300"
+                      checked={filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length}
+                      onChange={handleSelectAll}
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Group</TableHead>
@@ -273,8 +366,18 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((u) => (
+              {paginatedUsers.map((u: any) => (
                 <TableRow key={u.id} className={!u.isActive ? "opacity-50 grayscale" : ""}>
+                  {currentUser?.role === 'ADMIN' && (
+                    <TableCell>
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300"
+                        checked={selectedUserIds.includes(u.id)}
+                        onChange={() => handleSelectUser(u.id)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="font-medium flex items-center gap-2">
                       {u.name}
@@ -324,6 +427,22 @@ export default function UsersPage() {
           </Table>
         )}
       </div>
+
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} entries
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => !isOpen && setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })}>

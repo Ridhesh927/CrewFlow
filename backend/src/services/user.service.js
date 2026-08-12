@@ -304,6 +304,21 @@ const updateProfile = async (userId, data, requester) => {
   return user;
 };
 
+const bulkUpdateDepartment = async (userIds, newDepartment, requesterId) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, 'Invalid user IDs');
+  }
+
+  const { count } = await prisma.user.updateMany({
+    where: {
+      id: { in: userIds }
+    },
+    data: { department: newDepartment }
+  });
+
+  return { updatedCount: count };
+};
+
 module.exports = {
   getDashboardData,
   createUser,
@@ -314,5 +329,6 @@ module.exports = {
   deleteUser,
   getUserById,
   updateUser,
-  updateProfile
+  updateProfile,
+  bulkUpdateDepartment
 };

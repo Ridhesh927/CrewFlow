@@ -11,6 +11,7 @@ export default function Providers({ children }) {
           queries: {
             staleTime: 60 * 1000, // 1 minute
             refetchOnWindowFocus: false,
+            throwOnError: true,
           },
         },
       })

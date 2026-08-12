@@ -1,4 +1,6 @@
 const taskService = require('../services/task.service');
+const notificationService = require('../services/notification.service');
+const auditService = require('../services/audit.service');
 
 const getTasks = async (request, reply) => {
   try {
@@ -46,6 +48,21 @@ const approveProof = async (request, reply) => {
   try {
     const proofId = parseInt(request.params.id);
     const proof = await taskService.approveProof(proofId);
+
+    await notificationService.createNotification(
+      proof.internId,
+      'SUCCESS',
+      `Your proof for task "${proof.task?.title || 'Unknown'}" has been approved.`
+    );
+
+    await auditService.logAction({
+      userId: request.user.id,
+      action: 'PROOF_APPROVED',
+      resource: 'Proof',
+      resourceId: proof.id,
+      ipAddress: request.ip
+    });
+
     return { success: true, proof };
   } catch (error) {
     if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
@@ -57,6 +74,21 @@ const rejectProof = async (request, reply) => {
   try {
     const proofId = parseInt(request.params.id);
     const proof = await taskService.rejectProof(proofId);
+
+    await notificationService.createNotification(
+      proof.internId,
+      'WARNING',
+      `Your proof for task "${proof.task?.title || 'Unknown'}" has been rejected.`
+    );
+
+    await auditService.logAction({
+      userId: request.user.id,
+      action: 'PROOF_REJECTED',
+      resource: 'Proof',
+      resourceId: proof.id,
+      ipAddress: request.ip
+    });
+
     return { success: true, proof };
   } catch (error) {
     if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });

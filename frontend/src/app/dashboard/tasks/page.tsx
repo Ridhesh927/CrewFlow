@@ -7,6 +7,7 @@ import {
   Calendar, ImageIcon as ImageIconLucide, CheckSquare, Trash2, AlertCircle
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   useGetTasks, useGetPendingProofs, useCreateTask,
   useSubmitProof, useApproveProof, useRejectProof
@@ -581,6 +582,7 @@ function InternTasksView() {
 // Main Page
 // ────────────────────────────────────────────────────────────
 export default function TasksPage() {
+  useDocumentTitle("Tasks");
   const user = useAuthStore(state => state.user);
   if (!user) return null;
 

@@ -24,6 +24,13 @@ async function userRoutes(fastify, options) {
     { preValidation: [fastify.authenticate] },
     userController.updateProfile
   )
+
+  fastify.put(
+    '/bulk-department',
+    { preValidation: [fastify.authenticate, requireRole(['ADMIN'])] },
+    userController.bulkUpdateDepartment
+  )
+
   fastify.post(
     '/',
     { 

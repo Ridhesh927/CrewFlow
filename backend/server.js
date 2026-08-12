@@ -1,5 +1,6 @@
 const env = require('./src/env');
 const app = require('./src/app');
+require('./src/jobs/cleanupProofs');
 
 const start = async () => {
   try {

@@ -21,6 +21,8 @@ const leaveRoutes = require('./routes/leave.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
 const announcementRoutes = require('./routes/announcement.routes')
 const documentRoutes = require('./routes/document.routes')
+const notificationRoutes = require('./routes/notification.routes')
+const auditRoutes = require('./routes/audit.routes')
 
 fastify.register(cors, { 
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -48,6 +50,8 @@ fastify.register(leaveRoutes, { prefix: '/api/v1/leaves' })
 fastify.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
 fastify.register(announcementRoutes, { prefix: '/api/v1/announcements' })
 fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
+fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' })
+fastify.register(auditRoutes, { prefix: '/api/v1/audit' })
 
 const errorHandler = require('./plugins/error.middleware')
 

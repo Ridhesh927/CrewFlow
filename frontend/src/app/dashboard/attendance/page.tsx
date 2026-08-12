@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Search, Calendar, Clock, AlertCircle, Edit2 } from "lucide-react";
+import { Loader2, Search, Calendar, Clock, AlertCircle, Edit2, Download } from "lucide-react";
 import { useGetAttendances, useMarkAttendance } from "@/hooks/useAttendances";
 import { useAuthStore } from "@/store/useAuthStore";
+import { Button } from "@/components/ui/button";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 import {
   Table,
@@ -27,8 +29,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AttendancePage() {
+  useDocumentTitle("Attendance");
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -41,6 +45,8 @@ export default function AttendancePage() {
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const attendances = data?.attendances || [];
 
@@ -103,11 +109,19 @@ export default function AttendancePage() {
       }
     });
 
+    const rows = Array.from(userMap.values());
     return {
       uniqueDates: sortedDates,
       userRows: Array.from(userMap.values())
     };
   }, [attendances, departmentFilter, roleFilter, searchQuery]);
+
+  const totalPages = Math.ceil(userRows.length / pageSize);
+  const paginatedRows = userRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [departmentFilter, roleFilter, searchQuery, startDate, endDate]);
 
   const formatDateHeader = (isoStr) => {
     const d = new Date(isoStr);
@@ -169,6 +183,31 @@ export default function AttendancePage() {
     );
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance_export_${startDate}_to_${endDate}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export error", error);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -182,6 +221,12 @@ export default function AttendancePage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
+          {canEdit && (
+            <Button variant="outline" onClick={handleExportCSV} className="mr-2 hidden sm:flex">
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
           <div className="flex items-center gap-2 mr-4">
             <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
               <span className="text-muted-foreground mr-2">From:</span>
@@ -249,10 +294,11 @@ export default function AttendancePage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={3 + uniqueDates.length} className="h-32 text-center">
-                  <div className="flex justify-center items-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">Loading spreadsheet...</span>
+                <TableCell colSpan={6} className="h-48 text-center p-0">
+                  <div className="p-4 space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
                   </div>
                 </TableCell>
               </TableRow>
@@ -263,16 +309,18 @@ export default function AttendancePage() {
                 </TableCell>
               </TableRow>
             ) : (
-              userRows.map((row, index) => (
+              paginatedRows.map((row, index) => (
                 <TableRow key={row.user.id} className="hover:bg-muted/50 group border-b">
                   <TableCell className="sticky left-0 bg-card group-hover:bg-muted/50 z-10 border-r text-center font-medium">
-                    {index + 1}
+                    {(currentPage - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="sticky left-[60px] bg-card group-hover:bg-muted/50 z-10 border-r font-medium">
                     {row.user.name || "Unknown"}
                   </TableCell>
-                  <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 border-r text-xs text-center text-muted-foreground">
-                    {row.user.phoneNo || row.user.specialId || "-"}
+                  <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 border-r text-xs text-center text-muted-foreground flex flex-col items-center justify-center h-[57px]">
+                    {row.user.phoneNo ? <span>{row.user.phoneNo}</span> : null}
+                    {row.user.specialId ? <span className="text-[10px] opacity-70">{row.user.specialId}</span> : null}
+                    {!row.user.phoneNo && !row.user.specialId && <span>-</span>}
                   </TableCell>
                   {uniqueDates.map(dateStr => renderCell(row, dateStr))}
                 </TableRow>
@@ -281,6 +329,22 @@ export default function AttendancePage() {
           </TableBody>
         </Table>
       </div>
+
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, userRows.length)} of {userRows.length} entries
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

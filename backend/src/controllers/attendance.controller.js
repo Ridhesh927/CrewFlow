@@ -1,4 +1,5 @@
 const attendanceService = require('../services/attendance.service');
+const auditService = require('../services/audit.service');
 
 const getAttendances = async (request, reply) => {
   const userRole = request.user.role;
@@ -17,6 +18,16 @@ const markAttendance = async (request, reply) => {
 
   try {
     const attendance = await attendanceService.markAttendance(targetUserId, date, status, remarks, requester);
+    
+    await auditService.logAction({
+      userId: requester.id,
+      action: 'ATTENDANCE_MODIFIED',
+      resource: 'Attendance',
+      resourceId: attendance.id,
+      details: { targetUserId, status, date },
+      ipAddress: request.ip
+    });
+
     return { success: true, attendance };
   } catch (error) {
     if (error.statusCode) {

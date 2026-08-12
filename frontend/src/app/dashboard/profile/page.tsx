@@ -18,6 +18,13 @@ export default function ProfilePage() {
   const { mutate: updateProfile, isPending: updating } = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMessage, setPwdMessage] = useState<string | null>(null);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     name: "",
     phoneNo: "",
@@ -39,6 +46,39 @@ export default function ProfilePage() {
       { id: user.id, data: form },
       { onSuccess: () => setIsEditing(false) }
     );
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdMessage(null);
+    setPwdError(null);
+
+    if (newPassword !== confirmPassword) {
+      setPwdError("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdError("New password must be at least 6 characters.");
+      return;
+    }
+    setPwdLoading(true);
+    try {
+      const { executeApiRequest } = await import("@/services/api");
+      const data = await executeApiRequest("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (data.success) {
+        setPwdMessage(data.message || "Password updated successfully.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (err: any) {
+      setPwdError(err.message || "Failed to update password.");
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
   if (!currentUser) return null;
@@ -215,6 +255,43 @@ export default function ProfilePage() {
               </div>
             </div>
 
+          </CardContent>
+        </Card>
+
+        {/* Change Password Card */}
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>Update your account password securely.</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4 border-t border-border/50 max-w-md">
+            {pwdMessage && (
+              <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-md mb-4 text-sm">
+                {pwdMessage}
+              </div>
+            )}
+            {pwdError && (
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-md mb-4 text-sm">
+                {pwdError}
+              </div>
+            )}
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Current Password</Label>
+                <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>New Password</Label>
+                <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirm New Password</Label>
+                <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+              </div>
+              <Button type="submit" disabled={pwdLoading}>
+                {pwdLoading ? "Updating..." : "Update Password"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

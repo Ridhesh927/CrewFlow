@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { executeApiRequest } from "@/services/api";
 
 export default function SettingsPage() {
+  useDocumentTitle("Settings");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Search, Star, MessageSquare, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Search, Star, MessageSquare, Plus, AlertCircle, Download } from "lucide-react";
 import { useGetRatings, useCreateRating } from "@/hooks/useRatings";
 import { useGetAllUsers } from "@/hooks/useUsers";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ── Interactive Star Rating Input ────────────────────────────
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -181,6 +183,7 @@ function AssignRatingDialog() {
 
 // ── Main Page ────────────────────────────────────────────────
 export default function RatingsPage() {
+  useDocumentTitle("Ratings");
   const { data, isLoading } = useGetRatings();
   const currentUser = useAuthStore(state => state.user);
   const canRate = currentUser && ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(currentUser.role);
@@ -189,6 +192,8 @@ export default function RatingsPage() {
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [monthFilter, setMonthFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const ratings = data?.ratings || [];
 
@@ -208,6 +213,14 @@ export default function RatingsPage() {
     return matchesDept && matchesRole && matchesMonth && matchesSearch;
   });
 
+  const totalPages = Math.ceil(filteredRatings.length / pageSize);
+  const paginatedRatings = filteredRatings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [departmentFilter, roleFilter, monthFilter, searchQuery]);
+
   const renderStars = (rating: number) => (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(s => (
@@ -216,6 +229,31 @@ export default function RatingsPage() {
       <span className="ml-1.5 font-semibold text-sm">{rating}</span>
     </div>
   );
+
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/analytics/export/ratings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ratings_export.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export error", error);
+    }
+  };
 
   return (
     <motion.div
@@ -230,6 +268,11 @@ export default function RatingsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {canRate && (
+            <Button variant="outline" onClick={handleExportCSV} className="hidden sm:flex">
+              <Download className="mr-2 h-4 w-4" /> Export CSV
+            </Button>
+          )}
           {/* Search */}
           <div className="flex items-center border border-input rounded-md px-3 bg-transparent h-10 w-full md:w-[220px] focus-within:ring-2 focus-within:ring-ring">
             <Search className="h-4 w-4 text-muted-foreground shrink-0 mr-2" />
@@ -288,10 +331,11 @@ export default function RatingsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  <div className="flex justify-center items-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="text-muted-foreground">Loading ratings...</span>
+                <TableCell colSpan={6} className="h-48 p-0">
+                  <div className="p-4 space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
                   </div>
                 </TableCell>
               </TableRow>
@@ -302,7 +346,7 @@ export default function RatingsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredRatings.map((rating: any) => (
+              paginatedRatings.map((rating: any) => (
                 <TableRow key={rating.id}>
                   <TableCell>
                     <div className="flex flex-col">
@@ -339,6 +383,22 @@ export default function RatingsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredRatings.length)} of {filteredRatings.length} entries
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
