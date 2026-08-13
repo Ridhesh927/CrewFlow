@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -43,7 +44,7 @@ export default function LoginPage() {
         style={{ maxWidth: '448px' }}
       >
         <div className="flex flex-col items-center mb-8">
-          <img src="/crewflow fevicon.png" alt="CrewFlow Logo" className="h-20 w-20 mb-4 object-contain drop-shadow-md" />
+          <img src="/favicon.png" alt="CrewFlow Logo" className="h-20 w-20 mb-4 object-contain drop-shadow-md" />
           <h1 className="text-2xl font-bold tracking-tight">Intern Management System</h1>
         </div>
 

@@ -1,5 +1,5 @@
 const cloudinary = require('cloudinary').v2;
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 const ApiError = require('../plugins/ApiError');
 
 cloudinary.config({

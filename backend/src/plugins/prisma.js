@@ -1,8 +1,7 @@
 const fp = require('fastify-plugin')
-const { PrismaClient } = require('@prisma/client')
+const prisma = require('../prismaClient')
 
 module.exports = fp(async (fastify, opts) => {
-  const prisma = new PrismaClient()
   await prisma.$connect()
 
   fastify.decorate('prisma', prisma)

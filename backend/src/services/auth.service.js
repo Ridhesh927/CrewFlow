@@ -1,6 +1,6 @@
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 const ApiError = require('../plugins/ApiError');
 
 const generateTokens = (user, fastifyJwt) => {

@@ -1,4 +1,4 @@
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 const ApiError = require('../plugins/ApiError');
 const { Parser } = require('json2csv');
 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -103,7 +104,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         )}
       >
         <div className="h-16 flex items-center px-6 border-b border-border/50">
-          <img src="/crewflow fevicon.png" alt="CrewFlow Logo" className="h-10 w-10 mr-3 object-contain drop-shadow-sm" />
+          <Image src="/favicon.png" alt="CrewFlow Logo" width={40} height={40} className="mr-3 object-contain drop-shadow-sm" />
           <span className="font-bold text-lg tracking-tight">Intern Management</span>
         </div>
 

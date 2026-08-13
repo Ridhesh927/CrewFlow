@@ -19,7 +19,8 @@ try {
 } catch (error) {
   if (error instanceof z.ZodError) {
     console.error('❌ Invalid environment variables:');
-    error.errors.forEach((err) => {
+    const issues = error.issues || error.errors || [];
+    issues.forEach((err) => {
       console.error(`  - ${err.path.join('.')}: ${err.message}`);
     });
     process.exit(1);

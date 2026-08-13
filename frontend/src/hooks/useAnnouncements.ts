@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
+import { executeApiRequest } from '../services/api';
 
 export const useGetAnnouncements = (isAdmin: boolean = false) => {
   return useQuery({
@@ -7,8 +7,7 @@ export const useGetAnnouncements = (isAdmin: boolean = false) => {
     queryFn: async () => {
       // Admins get ALL announcements, others get targeted announcements
       const endpoint = isAdmin ? '/announcements/all' : '/announcements';
-      const response = await api.get(endpoint);
-      return response.data;
+      return executeApiRequest(endpoint);
     },
   });
 };
@@ -23,8 +22,10 @@ export const useCreateAnnouncement = () => {
       if (!payload.targetRole) delete payload.targetRole;
       if (!payload.targetDepartment) delete payload.targetDepartment;
       
-      const response = await api.post('/announcements', payload);
-      return response.data;
+      return executeApiRequest('/announcements', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
@@ -37,8 +38,9 @@ export const useDeleteAnnouncement = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete(`/announcements/${id}`);
-      return response.data;
+      return executeApiRequest(`/announcements/${id}`, {
+        method: 'DELETE',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });

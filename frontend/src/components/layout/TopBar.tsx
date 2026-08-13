@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { useNotifications } from "@/hooks/useNotifications";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ export function TopBar({ onMenuClick }) {
   const user = useAuthStore((state) => state.user);
   const { setTheme, theme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const router = useRouter();
 
   if (!user) return null;
 
@@ -137,11 +138,11 @@ export function TopBar({ onMenuClick }) {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer w-full">
-              <Link href="/dashboard/profile">Profile</Link>
+            <DropdownMenuItem className="cursor-pointer w-full" onClick={() => router.push("/dashboard/profile")}>
+              Profile
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="cursor-pointer w-full">
-              <Link href="/dashboard/settings">Settings</Link>
+            <DropdownMenuItem className="cursor-pointer w-full" onClick={() => router.push("/dashboard/settings")}>
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

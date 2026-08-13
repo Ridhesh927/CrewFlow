@@ -1,4 +1,4 @@
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 
 /**
  * Logs an action to the audit log

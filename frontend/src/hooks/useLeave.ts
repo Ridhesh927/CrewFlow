@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
+import { executeApiRequest } from '../services/api';
 
 export const useGetLeaveRequests = () => {
   return useQuery({
     queryKey: ['leaves'],
     queryFn: async () => {
-      const response = await api.get('/leaves');
-      return response.data;
+      return executeApiRequest('/leaves');
     },
   });
 };
@@ -16,8 +15,10 @@ export const useCreateLeaveRequest = () => {
 
   return useMutation({
     mutationFn: async (data: { startDate: string; endDate: string; reason: string }) => {
-      const response = await api.post('/leaves', data);
-      return response.data;
+      return executeApiRequest('/leaves', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] });
@@ -31,8 +32,9 @@ export const useApproveLeave = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.put(`/leaves/${id}/approve`);
-      return response.data;
+      return executeApiRequest(`/leaves/${id}/approve`, {
+        method: 'PUT',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] });
@@ -46,8 +48,9 @@ export const useRejectLeave = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.put(`/leaves/${id}/reject`);
-      return response.data;
+      return executeApiRequest(`/leaves/${id}/reject`, {
+        method: 'PUT',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] });

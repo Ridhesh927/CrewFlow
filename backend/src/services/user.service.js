@@ -1,5 +1,5 @@
 const argon2 = require('argon2');
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 const ApiError = require('../plugins/ApiError');
 
 const getDashboardData = async (userId) => {

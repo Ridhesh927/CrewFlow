@@ -1,4 +1,4 @@
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 
 /**
  * Creates a notification for a specific user
