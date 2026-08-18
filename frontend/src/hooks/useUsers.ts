@@ -19,7 +19,7 @@ export function useGetAllUsers() {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data) =>
+    mutationFn: (data: any) =>
       executeApiRequest(`/users`, {
         method: "POST",
         body: JSON.stringify(data),
@@ -35,7 +35,7 @@ export function useCreateUser() {
 export function useToggleUserStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id) =>
+    mutationFn: (id: number) =>
       executeApiRequest(`/users/${id}/status`, {
         method: "PUT",
       }),
@@ -52,7 +52,7 @@ export function useToggleUserStatus() {
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id) =>
+    mutationFn: (id: number) =>
       executeApiRequest(`/users/${id}`, {
         method: "DELETE",
       }),
@@ -69,7 +69,7 @@ export function useDeleteUser() {
 export function usePromoteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, newRole }) =>
+    mutationFn: ({ id, newRole }: { id: number; newRole: string }) =>
       executeApiRequest(`/users/${id}/promote`, {
         method: "PUT",
         body: JSON.stringify({ newRole }),
