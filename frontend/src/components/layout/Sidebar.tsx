@@ -23,7 +23,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-export function Sidebar({ isMobileOpen, setIsMobileOpen }) {
+export function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: any, setIsMobileOpen: any }) {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const pathname = usePathname();

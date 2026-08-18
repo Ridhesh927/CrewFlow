@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { executeApiRequest } from "../services/api";
 
-export function useDashboardMetrics(userId) {
+export function useDashboardMetrics(userId: any) {
   return useQuery({
     queryKey: ["dashboard", userId],
     queryFn: () => executeApiRequest(`/users/${userId}/dashboard`),
@@ -9,7 +9,7 @@ export function useDashboardMetrics(userId) {
   });
 }
 
-export function useUserAnalytics(userId) {
+export function useUserAnalytics(userId: any) {
   return useQuery({
     queryKey: ["analytics", "user", userId],
     queryFn: () => executeApiRequest(`/analytics/user/${userId}`),
@@ -17,7 +17,7 @@ export function useUserAnalytics(userId) {
   });
 }
 
-export function useTeamAnalytics(department = "") {
+export function useTeamAnalytics(department: any = "") {
   return useQuery({
     queryKey: ["analytics", "team", department],
     queryFn: () => executeApiRequest(`/analytics/team${department ? `?department=${department}` : ''}`),

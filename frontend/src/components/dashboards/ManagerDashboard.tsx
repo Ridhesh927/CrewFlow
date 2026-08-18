@@ -28,11 +28,11 @@ export function ManagerDashboard({ role, userId }: { role: string; userId: numbe
   const totalUsers = analytics.length;
   
   let missingAttendanceCount = 0;
-  analytics.forEach(a => {
+  analytics.forEach((a: any) => {
     if (a.attendanceStats.Absent > 0) missingAttendanceCount += a.attendanceStats.Absent;
   });
 
-  const chartData = analytics.map(a => {
+  const chartData = analytics.map((a: any) => {
     const present = a.attendanceStats.Present || 0;
     const total = present + (a.attendanceStats.Absent || 0) + (a.attendanceStats.Late || 0) + (a.attendanceStats.Leave || 0);
     const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0;
@@ -85,7 +85,7 @@ export function ManagerDashboard({ role, userId }: { role: string; userId: numbe
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
             <div className="space-y-4">
-              {pendingProofs.length > 0 ? pendingProofs.map((proof) => (
+              {pendingProofs.length > 0 ? pendingProofs.map((proof: any) => (
                 <div key={proof.id} className="flex flex-col p-3 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export function ManagerDashboard({ role, userId }: { role: string; userId: numbe
                     <div className="mt-2 pl-14">
                       <p className="text-xs text-muted-foreground mb-1">Sub-tasks (Task scope):</p>
                       <ul className="text-xs list-disc pl-4 text-primary">
-                        {proof.task.subTasks.map((st) => (
+                        {proof.task.subTasks.map((st: any) => (
                           <li key={st.id}>{st.title}</li>
                         ))}
                       </ul>

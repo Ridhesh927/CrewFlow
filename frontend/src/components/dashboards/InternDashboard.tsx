@@ -85,7 +85,7 @@ export function InternDashboard({ userId }: { userId: number }) {
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
             <div className="space-y-4">
-              {activeTasks.length > 0 ? activeTasks.map((task) => (
+              {activeTasks.length > 0 ? activeTasks.map((task: any) => (
                 <div key={task.id} className="flex flex-col p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div>
@@ -105,7 +105,7 @@ export function InternDashboard({ userId }: { userId: number }) {
                     <div className="mt-2 pt-2 border-t">
                       <p className="text-xs font-medium mb-2 text-muted-foreground">Checklist</p>
                       <div className="space-y-1">
-                        {task.subTasks.map(st => (
+                        {task.subTasks.map((st: any) => (
                           <div key={st.id} className="flex items-center space-x-2">
                             <input 
                               type="checkbox" 
@@ -136,7 +136,7 @@ export function InternDashboard({ userId }: { userId: number }) {
              <div className="text-sm text-muted-foreground text-center py-8">
                {proofs.length > 0 ? (
                  <ul className="text-left space-y-2">
-                    {proofs.map(p => (
+                    {proofs.map((p: any) => (
                        <li key={p.id}>Submitted proof for task #{p.taskId} - {p.status}</li>
                     ))}
                  </ul>

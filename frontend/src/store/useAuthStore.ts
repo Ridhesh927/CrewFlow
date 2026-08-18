@@ -2,7 +2,22 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { executeApiRequest } from '../services/api';
 
-export const useAuthStore = create(
+export interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  error: string | null;
+  login: (identifier: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
@@ -23,8 +38,9 @@ export const useAuthStore = create(
             set({ user: data.user, isAuthenticated: true });
             return true;
           }
-        } catch (err) {
-          set({ error: err.message });
+          return false;
+        } catch (err: any) {
+          set({ error: err.message || 'Login failed' });
           return false;
         }
       },

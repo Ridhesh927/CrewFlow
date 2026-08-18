@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 
-export function TopBar({ onMenuClick }) {
+export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const user = useAuthStore((state) => state.user);
   const { setTheme, theme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();

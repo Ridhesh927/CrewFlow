@@ -8,19 +8,19 @@ import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
 function DropdownMenu({
   ...props
-}) {
+}: any) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
 function DropdownMenuPortal({
   ...props
-}) {
+}: any) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
 }
 
 function DropdownMenuTrigger({
   ...props
-}) {
+}: any) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
@@ -31,7 +31,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   className,
   ...props
-}) {
+}: any) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -54,7 +54,7 @@ function DropdownMenuContent({
 
 function DropdownMenuGroup({
   ...props
-}) {
+}: any) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
 
@@ -62,7 +62,7 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}) {
+}: { className?: string; inset?: boolean; [key: string]: any }) {
   return (
     <MenuPrimitive.GroupLabel
       data-slot="dropdown-menu-label"
@@ -80,7 +80,7 @@ function DropdownMenuItem({
   inset,
   variant = "default",
   ...props
-}) {
+}: { className?: string; inset?: boolean; variant?: "default" | "destructive"; [key: string]: any }) {
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -105,7 +105,7 @@ function DropdownMenuSubTrigger({
   inset,
   children,
   ...props
-}) {
+}: { className?: string; inset?: boolean; children?: React.ReactNode; [key: string]: any }) {
   return (
     <MenuPrimitive.SubmenuTrigger
       data-slot="dropdown-menu-sub-trigger"
@@ -128,7 +128,7 @@ function DropdownMenuSubContent({
   sideOffset = 0,
   className,
   ...props
-}) {
+}: any) {
   return (
     <DropdownMenuContent
       data-slot="dropdown-menu-sub-content"
@@ -150,7 +150,7 @@ function DropdownMenuCheckboxItem({
   checked,
   inset,
   ...props
-}) {
+}: { className?: string; children?: React.ReactNode; checked?: boolean | "indeterminate"; inset?: boolean; [key: string]: any }) {
   return (
     <MenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
@@ -175,7 +175,7 @@ function DropdownMenuCheckboxItem({
 
 function DropdownMenuRadioGroup({
   ...props
-}) {
+}: any) {
   return (<MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />);
 }
 
@@ -184,7 +184,7 @@ function DropdownMenuRadioItem({
   children,
   inset,
   ...props
-}) {
+}: { className?: string; children?: React.ReactNode; inset?: boolean; [key: string]: any }) {
   return (
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
@@ -209,7 +209,7 @@ function DropdownMenuRadioItem({
 function DropdownMenuSeparator({
   className,
   ...props
-}) {
+}: any) {
   return (
     <MenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
@@ -221,7 +221,7 @@ function DropdownMenuSeparator({
 function DropdownMenuShortcut({
   className,
   ...props
-}) {
+}: any) {
   return (
     <span
       data-slot="dropdown-menu-shortcut"

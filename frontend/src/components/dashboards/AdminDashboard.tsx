@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, UserCheck, Clock, FileWarning, Loader2 } from "lucide-react";
 import { useDashboardMetrics, useTeamAnalytics } from "@/hooks/useAnalytics";
 
-export function AdminDashboard({ userId }) {
+export function AdminDashboard({ userId }: { userId: any }) {
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
   const { data: teamData, isLoading: loadingTeam } = useTeamAnalytics();
 
@@ -19,12 +19,12 @@ export function AdminDashboard({ userId }) {
     ? Object.values(adminStats.usersByRole || {}).reduce((a: any, b: any) => a + b, 0) 
     : analytics.length;
     
-  const activeInterns = adminStats?.activeInterns ?? analytics.filter(a => a.user.role === 'INTERN').length;
+  const activeInterns = adminStats?.activeInterns ?? analytics.filter((a: any) => a.user.role === 'INTERN').length;
   
   // Calculate average attendance roughly
   let totalPresent = 0;
   let totalRecords = 0;
-  analytics.forEach(a => {
+  analytics.forEach((a: any) => {
     const stats = a.attendanceStats;
     const present = stats.Present || 0;
     const total = present + (stats.Absent || 0) + (stats.Late || 0) + (stats.Leave || 0);
@@ -77,7 +77,7 @@ export function AdminDashboard({ userId }) {
           </CardHeader>
           <CardContent className="border-t border-border/50 pt-4">
             <div className="space-y-4">
-              {activeTasks.length > 0 ? activeTasks.map((task, i) => (
+              {activeTasks.length > 0 ? activeTasks.map((task: any, i: number) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="h-2 w-2 rounded-full bg-primary" />
                   <div className="flex-1 space-y-1">
