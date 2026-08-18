@@ -141,7 +141,7 @@ function CreateAnnouncementDialog() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground leading-snug">
-            Leaving targets as "All" will make this a global announcement (requires Admin/Senior TL privileges).
+            Leaving targets as &quot;All&quot; will make this a global announcement (requires Admin/Senior TL privileges).
           </p>
 
           {error && (
@@ -168,14 +168,15 @@ function CreateAnnouncementDialog() {
 // ────────────────────────────────────────────────────────────
 export default function AnnouncementsPage() {
   const user = useAuthStore(state => state.user);
-  if (!user) return null;
-
-  const isAdmin = user.role === "ADMIN";
-  const canCreate = ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(user.role);
   
+  const isAdmin = user?.role === "ADMIN";
   const { data, isLoading } = useGetAnnouncements(isAdmin);
   const { mutate: deleteAnnouncement, isPending: deleting } = useDeleteAnnouncement();
 
+  if (!user) return null;
+
+  const canCreate = ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(user.role);
+  
   const announcements = data?.announcements || [];
 
   return (

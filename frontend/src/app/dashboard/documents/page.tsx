@@ -167,13 +167,14 @@ function UploadDocumentDialog() {
 // ────────────────────────────────────────────────────────────
 export default function DocumentsPage() {
   const user = useAuthStore(state => state.user);
+  
+  const { data, isLoading } = useGetDocuments();
+  const { mutate: deleteDocument, isPending: deleting } = useDeleteDocument();
+
   if (!user) return null;
 
   const isAdmin = user.role === "ADMIN";
   const canUpload = ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(user.role);
-  
-  const { data, isLoading } = useGetDocuments();
-  const { mutate: deleteDocument, isPending: deleting } = useDeleteDocument();
 
   const documents = data?.documents || [];
 

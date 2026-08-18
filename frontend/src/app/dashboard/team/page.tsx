@@ -81,11 +81,11 @@ function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: a
 // ────────────────────────────────────────────────────────────
 export default function TeamPage() {
   const currentUser = useAuthStore(state => state.user);
-  if (!currentUser) return null;
-
   const { data, isLoading } = useGetAllUsers();
   const [searchQuery, setSearchQuery] = useState("");
   const [reassignUser, setReassignUser] = useState<any | null>(null);
+
+  if (!currentUser) return null;
 
   const isAdminOrSenior = ["ADMIN", "SENIOR_TL"].includes(currentUser.role);
   const allUsers = data?.users || [];

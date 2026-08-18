@@ -35,7 +35,7 @@ const login = async (identifier, password, fastifyJwt) => {
     throw new ApiError(403, 'Your account has been disabled. Please contact your admin.');
   }
   
-  let isMatch = false;
+  let isMatch;
   try {
     isMatch = await argon2.verify(user.password, password);
   } catch (err) {
@@ -61,7 +61,7 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   
   if (!user) throw new ApiError(404, 'User not found');
 
-  let isMatch = false;
+  let isMatch;
   try {
     isMatch = await argon2.verify(user.password, currentPassword);
   } catch (err) {

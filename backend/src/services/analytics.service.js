@@ -51,7 +51,7 @@ const getUserAnalytics = async (targetUserId, requester) => {
 const getTeamAnalytics = async (requester, departmentQuery) => {
   const { role, id: requesterId } = requester;
 
-  let usersQuery = {};
+  let usersQuery;
 
   if (role === 'ADMIN') {
     if (departmentQuery) {

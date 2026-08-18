@@ -203,7 +203,7 @@ export default function LeavePage() {
               ) : leaveRequests.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
-                    You haven't made any leave requests.
+                    You haven&apos;t made any leave requests.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -250,7 +250,7 @@ export default function LeavePage() {
             ) : pendingLeaves.length === 0 ? (
               <div className="flex flex-col h-48 items-center justify-center text-muted-foreground gap-3 border rounded-xl border-dashed">
                 <CheckCircle2 className="h-10 w-10 opacity-40" />
-                <p>No pending leave requests. You're all caught up!</p>
+                <p>No pending leave requests. You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -267,7 +267,7 @@ export default function LeavePage() {
                           {formatDate(leave.startDate)} <span className="text-muted-foreground font-normal">to</span> {formatDate(leave.endDate)}
                         </div>
                         <p className="text-sm text-muted-foreground mt-2 border-l-2 pl-3 ml-1">
-                          "{leave.reason}"
+                          &quot;{leave.reason}&quot;
                         </p>
                       </div>
                       <div className="flex gap-2 shrink-0">

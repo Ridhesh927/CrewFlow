@@ -117,7 +117,7 @@ const fillTaskSheet = async (internId, parts) => {
   const taskId = parseInt(fields.taskId);
   if (!taskId) throw new ApiError(400, 'taskId is required');
 
-  let completedSubTasks = [];
+  let completedSubTasks;
   try {
     completedSubTasks = fields.completedSubTasks ? JSON.parse(fields.completedSubTasks) : [];
   } catch {

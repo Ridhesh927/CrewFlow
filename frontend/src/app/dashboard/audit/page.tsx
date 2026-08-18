@@ -14,10 +14,6 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
   const fetchLogs = async () => {
     try {
       const data = await executeApiRequest("/audit");
@@ -30,6 +26,11 @@ export default function AuditLogsPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLogs();
+  }, []);
 
   const getActionColor = (action: string) => {
     if (action.includes("CREATED") || action.includes("APPROVED")) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";

@@ -154,6 +154,7 @@ export default function UsersPage() {
 
   // Reset page when filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [departmentFilter, roleFilter, statusFilter, pointsSort, searchQuery]);
 

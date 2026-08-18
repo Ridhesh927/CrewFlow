@@ -48,7 +48,7 @@ export default function AttendancePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const attendances = data?.attendances || [];
+  const attendances = useMemo(() => data?.attendances || [], [data?.attendances]);
 
   // Extract unique filter options
   const departments = ["ALL", ...new Set(attendances.map(a => a.user?.department).filter(Boolean))];
@@ -120,6 +120,7 @@ export default function AttendancePage() {
   const paginatedRows = userRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [departmentFilter, roleFilter, searchQuery, startDate, endDate]);
 

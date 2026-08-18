@@ -25,14 +25,10 @@ const prisma = new PrismaClient();
 
 describe('Leave API Integration Tests', () => {
   let token;
-  let adminToken;
-  let managerToken;
 
   beforeAll(async () => {
     await fastify.ready();
     token = fastify.jwt.sign({ id: 1, role: 'INTERN', name: 'John Doe' });
-    adminToken = fastify.jwt.sign({ id: 2, role: 'ADMIN', name: 'Admin User' });
-    managerToken = fastify.jwt.sign({ id: 3, role: 'TL', name: 'Tech Lead' });
   });
 
   afterAll(async () => {

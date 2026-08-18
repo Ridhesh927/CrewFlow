@@ -27,6 +27,7 @@ export function useNotifications() {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications();
     // Optional: poll every minute
     const interval = setInterval(fetchNotifications, 60000);

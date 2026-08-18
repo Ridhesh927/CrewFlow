@@ -218,6 +218,7 @@ export default function RatingsPage() {
 
   // Reset page when filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [departmentFilter, roleFilter, monthFilter, searchQuery]);
 
