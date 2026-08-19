@@ -1,6 +1,8 @@
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
+const crypto = require('crypto');
+const emailService = require('./email.service');
 const ApiError = require('../plugins/ApiError');
 
 const generateTokens = (user, fastifyJwt) => {
@@ -101,8 +103,69 @@ const refresh = async (currentRefreshToken, fastifyJwt) => {
   }
 };
 
+const forgotPassword = async (email) => {
+  if (!email) throw new ApiError(400, 'Email is required');
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  
+  if (!user || !user.isActive) {
+    // Return success even if user not found to prevent email enumeration
+    return { success: true, message: 'If an account with that email exists, a reset link has been sent.' };
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await prisma.user.update({
+    where: { email },
+    data: {
+      resetToken: hashedToken,
+      resetTokenExpiry: tokenExpiry
+    }
+  });
+
+  await emailService.sendPasswordResetEmail(email, resetToken);
+
+  return { success: true, message: 'If an account with that email exists, a reset link has been sent.' };
+};
+
+const resetPassword = async (token, newPassword) => {
+  if (!token || !newPassword) throw new ApiError(400, 'Token and new password are required');
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: hashedToken,
+      resetTokenExpiry: {
+        gt: new Date()
+      }
+    }
+  });
+
+  if (!user) {
+    throw new ApiError(400, 'Invalid or expired reset token');
+  }
+
+  const hashedNewPassword = await argon2.hash(newPassword);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedNewPassword,
+      resetToken: null,
+      resetTokenExpiry: null
+    }
+  });
+
+  return { success: true, message: 'Password has been successfully reset' };
+};
+
 module.exports = {
   login,
   changePassword,
-  refresh
+  refresh,
+  forgotPassword,
+  resetPassword
 };

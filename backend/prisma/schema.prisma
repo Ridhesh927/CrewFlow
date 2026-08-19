@@ -30,6 +30,8 @@ model User {
   points       Int          @default(0)
   notifications Notification[]
   auditLogs    AuditLog[]
+  resetToken   String?
+  resetTokenExpiry DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 }

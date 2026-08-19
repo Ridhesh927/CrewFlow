@@ -85,4 +85,30 @@ const logout = async (request, reply) => {
   return { success: true, message: 'Logged out successfully' };
 }
 
-module.exports = { login, changePassword, refresh, logout }
+const forgotPassword = async (request, reply) => {
+  const { email } = request.body;
+  try {
+    const result = await authService.forgotPassword(email);
+    return result;
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
+  }
+};
+
+const resetPassword = async (request, reply) => {
+  const { token, newPassword } = request.body;
+  try {
+    const result = await authService.resetPassword(token, newPassword);
+    return result;
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
+  }
+};
+
+module.exports = { login, changePassword, refresh, logout, forgotPassword, resetPassword }
