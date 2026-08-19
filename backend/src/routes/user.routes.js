@@ -42,7 +42,7 @@ async function userRoutes(fastify, options) {
 
   fastify.put(
     '/:id/promote',
-    { preValidation: [requireHierarchy] },
+    { preValidation: [fastify.authenticate, requireHierarchy] },
     userController.promoteUser
   )
 
