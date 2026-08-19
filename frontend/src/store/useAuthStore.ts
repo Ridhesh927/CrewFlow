@@ -11,6 +11,7 @@ export interface User {
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   error: string | null;
   login: (identifier: string, password: string) => Promise<boolean>;
@@ -21,9 +22,10 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       error: null,
-      
+
       // Real login function using API
       login: async (identifier, password) => {
         try {
@@ -32,10 +34,10 @@ export const useAuthStore = create<AuthState>()(
             method: 'POST',
             body: JSON.stringify({ identifier, password }),
           });
-          
+
           if (data.success) {
             localStorage.setItem('jwt_token', data.token);
-            set({ user: data.user, isAuthenticated: true });
+            set({ user: data.user, token: data.token, isAuthenticated: true });
             return true;
           }
           return false;
@@ -44,21 +46,21 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
       },
-      
+
       logout: async () => {
         try {
           await executeApiRequest('/auth/logout', { method: 'POST' });
         } catch (e) {
-          console.error("Logout API failed", e);
+          console.error('Logout API failed', e);
         }
         localStorage.removeItem('jwt_token');
-        set({ user: null, isAuthenticated: false, error: null });
+        set({ user: null, token: null, isAuthenticated: false, error: null });
       },
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
     }
   )
 );
