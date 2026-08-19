@@ -65,10 +65,42 @@ const approveLeaveRequest = async (leaveId, approver) => {
     data: { status: 'APPROVED' }
   });
 
-  const startDate = new Date(updatedLeaveRequest.startDate);
-  const endDate = new Date(updatedLeaveRequest.endDate);
-  
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+  // Normalize start and end dates to midnight to avoid time component issues
+  const start = new Date(updatedLeaveRequest.startDate);
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(updatedLeaveRequest.endDate);
+  end.setUTCHours(0, 0, 0, 0);
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const current = new Date(d);
+    const existingAttendance = await prisma.attendance.findFirst({
+      where: {
+        userId: updatedLeaveRequest.userId,
+        date: current
+      }
+    });
+
+    if (!existingAttendance) {
+      await prisma.attendance.create({
+        data: {
+          userId: updatedLeaveRequest.userId,
+          date: current,
+          status: 'Leave',
+          markedBy: approverId,
+          remarks: 'Approved leave request'
+        }
+      });
+    } else {
+      await prisma.attendance.update({
+        where: { id: existingAttendance.id },
+        data: {
+          status: 'Leave',
+          markedBy: approverId,
+          remarks: 'Updated due to approved leave request'
+        }
+      });
+    }
+  }
     const current = new Date(d);
     
     const existingAttendance = await prisma.attendance.findFirst({
