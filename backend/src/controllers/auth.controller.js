@@ -33,9 +33,6 @@ const login = async (request, reply) => {
       ipAddress: request.ip
     });
 
-    if (error.statusCode) {
-      return reply.code(error.statusCode).send({ error: error.message });
-    }
     throw error;
   }
 }
