@@ -33,7 +33,7 @@ const sendPasswordResetEmail = async (toEmail, resetToken) => {
     return info;
   } catch (error) {
     console.error('Error sending mock email:', error);
-    throw new Error('Failed to send reset email');
+    throw new Error('Failed to send reset email', { cause: error });
   }
 };
 

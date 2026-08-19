@@ -7,7 +7,7 @@ const login = async (request, reply) => {
 
   try {
     const { accessToken, refreshToken, user } = await authService.login(loginIdentifier, password, request.server.jwt);
-    
+
     await auditService.logAction({
       userId: user.id,
       action: 'USER_LOGIN',

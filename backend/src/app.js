@@ -36,7 +36,20 @@ if (!process.env.COOKIE_SECRET) {
 }
 fastify.register(require('@fastify/cookie'), {
   secret: process.env.COOKIE_SECRET,
-})
+});
+
+// Register session handling with default in-memory store
+const fastifySession = require('@fastify/session');
+fastify.register(fastifySession, {
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  }
+});
+
 fastify.register(require('@fastify/rate-limit'), {
   max: 100,
   timeWindow: '1 minute'
