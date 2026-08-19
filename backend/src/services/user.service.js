@@ -323,6 +323,30 @@ const bulkUpdateDepartment = async (userIds, newDepartment, requesterId) => {
   return { updatedCount: count };
 };
 
+// Helper to verify if targetUserId is a subordinate of managerId using BFS
+const checkUserHierarchy = async (managerId, targetUserId) => {
+  let currentLevelIds = [managerId];
+  const visited = new Set(currentLevelIds);
+  while (currentLevelIds.length > 0) {
+    const users = await prisma.user.findMany({
+      where: { managerId: { in: currentLevelIds } },
+      select: { id: true }
+    });
+    const nextLevelIds = [];
+    for (const u of users) {
+      if (u.id === targetUserId) {
+        return true;
+      }
+      if (!visited.has(u.id)) {
+        visited.add(u.id);
+        nextLevelIds.push(u.id);
+      }
+    }
+    currentLevelIds = nextLevelIds;
+  }
+  return false;
+};
+
 module.exports = {
   getDashboardData,
   createUser,
@@ -334,5 +358,6 @@ module.exports = {
   getUserById,
   updateUser,
   updateProfile,
-  bulkUpdateDepartment
+  bulkUpdateDepartment,
+  checkUserHierarchy,
 };

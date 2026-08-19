@@ -9,54 +9,26 @@ const requireRole = (roles) => {
 
 // Ensure the target user is a subordinate of the requester
 // This requires the request to have a target userId in params.id
+// Ensure the target user is a subordinate of the requester using the service layer
 const requireHierarchy = async (request, reply) => {
   try {
-    if (!request.user) {
-      return reply.code(401).send({ error: 'Unauthorized' })
+    // Ensure authentication has run (fastify.authenticate) or verify token here
+    if (!request.user) await request.jwtVerify();
+    const requesterId = request.user.id;
+    const targetUserId = parseInt(request.params.id);
+    if (isNaN(targetUserId)) {
+      return reply.code(400).send({ error: 'Invalid target user ID' });
     }
-    const requesterId = request.user.id
-    const targetUserId = parseInt(request.params.id)
-
-    if (requesterId === targetUserId) return // User can access their own data
-
-    // Need to recursively check if targetUserId is a subordinate of requesterId
-    // Since recursive DB queries can be complex, we can fetch all subordinates of requester
-    // This is a simplified BFS approach
-    const prisma = request.server.prisma
-    
-    let isSubordinate = false
-    let currentLevelIds = [requesterId]
-    const visited = new Set(currentLevelIds)
-
-    while (currentLevelIds.length > 0) {
-      const users = await prisma.user.findMany({
-        where: { managerId: { in: currentLevelIds } },
-        select: { id: true }
-      })
-
-      const nextLevelIds = []
-      for (const u of users) {
-        if (u.id === targetUserId) {
-          isSubordinate = true
-          break
-        }
-        if (!visited.has(u.id)) {
-          visited.add(u.id)
-          nextLevelIds.push(u.id)
-        }
-      }
-
-      if (isSubordinate) break
-      currentLevelIds = nextLevelIds
-    }
-
+    // Allow self-access or admins
+    if (requesterId === targetUserId || request.user.role === 'ADMIN') return;
+    const { checkUserHierarchy } = require('../services/user.service');
+    const isSubordinate = await checkUserHierarchy(requesterId, targetUserId);
     if (!isSubordinate) {
-      return reply.code(403).send({ error: 'Forbidden: User is not in your hierarchy' })
+      return reply.code(403).send({ error: 'Forbidden: User is not in your hierarchy' });
     }
-
   } catch (err) {
-    return reply.code(401).send({ error: 'Unauthorized' })
+    return reply.code(401).send({ error: 'Unauthorized' });
   }
-}
+};
 
 module.exports = { requireRole, requireHierarchy }
