@@ -103,7 +103,9 @@ const createUser = async (userData, managerId) => {
   return userWithoutPassword;
 };
 
-const getAllUsers = async (currentUserId) => {
+const getAllUsers = async (currentUserId, page = 1, limit = 50) => {
+  const skip = (page - 1) * limit;
+
   const currentUserRecord = await prisma.user.findUnique({
     where: { id: currentUserId },
     select: { role: true, department: true }
@@ -117,6 +119,8 @@ const getAllUsers = async (currentUserId) => {
 
   const users = await prisma.user.findMany({
     where: whereClause,
+    skip: skip,
+    take: limit,
     select: {
       id: true,
       email: true,

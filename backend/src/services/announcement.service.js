@@ -53,8 +53,11 @@ const getAnnouncements = async (user) => {
   return announcements;
 };
 
-const getAllAnnouncements = async () => {
+const getAllAnnouncements = async (page = 1, limit = 50) => {
+  const skip = (page - 1) * limit;
   const announcements = await prisma.announcement.findMany({
+    skip: skip,
+    take: limit,
     include: {
       author: {
         select: { name: true, role: true }

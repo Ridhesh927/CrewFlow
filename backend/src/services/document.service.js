@@ -53,8 +53,11 @@ const uploadDocument = async (parts, userId) => {
   return document;
 };
 
-const getDocuments = async () => {
+const getDocuments = async (page = 1, limit = 50) => {
+  const skip = (page - 1) * limit;
   const documents = await prisma.document.findMany({
+    skip: skip,
+    take: limit,
     include: { uploader: { select: { id: true, name: true, department: true } } },
     orderBy: { createdAt: 'desc' }
   });
