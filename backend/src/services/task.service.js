@@ -181,16 +181,29 @@ const getPendingProofs = async (user) => {
 };
 
 const approveProof = async (proofId) => {
-  const proof = await prisma.proof.update({
-    where: { id: proofId },
-    data: { status: 'Approved' },
-    include: { task: { select: { title: true } } }
+  const existingProof = await prisma.proof.findUnique({
+    where: { id: proofId }
   });
 
-  await prisma.user.update({
-    where: { id: proof.internId },
-    data: { points: { increment: 10 } }
-  });
+  if (!existingProof) {
+    throw new ApiError(404, 'Proof not found');
+  }
+
+  if (existingProof.status === 'Approved') {
+    throw new ApiError(400, 'Proof is already approved');
+  }
+
+  const [proof] = await prisma.$transaction([
+    prisma.proof.update({
+      where: { id: proofId },
+      data: { status: 'Approved' },
+      include: { task: { select: { title: true } } }
+    }),
+    prisma.user.update({
+      where: { id: existingProof.internId },
+      data: { points: { increment: 10 } }
+    })
+  ]);
 
   return proof;
 };
