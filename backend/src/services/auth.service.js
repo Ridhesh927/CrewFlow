@@ -5,12 +5,16 @@ const crypto = require('crypto');
 const emailService = require('./email.service');
 const ApiError = require('../plugins/ApiError');
 
+if (!process.env.JWT_REFRESH_SECRET) {
+  throw new Error('FATAL: JWT_REFRESH_SECRET environment variable is not defined.');
+}
+
 const generateTokens = (user, fastifyJwt) => {
   const accessToken = fastifyJwt.sign({ id: user.id, role: user.role }, { expiresIn: '15m' });
   
   const refreshToken = jwt.sign(
     { id: user.id, role: user.role }, 
-    process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret', 
+    process.env.JWT_REFRESH_SECRET, 
     { expiresIn: '7d' }
   );
 
@@ -88,7 +92,7 @@ const refresh = async (currentRefreshToken, fastifyJwt) => {
   }
 
   try {
-    const decoded = jwt.verify(currentRefreshToken, process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret');
+    const decoded = jwt.verify(currentRefreshToken, process.env.JWT_REFRESH_SECRET);
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
     
     if (!user || !user.isActive) {

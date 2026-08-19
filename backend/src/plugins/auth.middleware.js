@@ -1,12 +1,8 @@
 const requireRole = (roles) => {
   return async (request, reply) => {
-    try {
-      await request.jwtVerify()
-      if (!roles.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Forbidden: Insufficient privileges' })
-      }
-    } catch (err) {
-      return reply.code(401).send({ error: 'Unauthorized' })
+    // request.user is already populated by fastify.authenticate
+    if (!request.user || !roles.includes(request.user.role)) {
+      return reply.code(403).send({ error: 'Forbidden: Insufficient privileges' })
     }
   }
 }
@@ -15,7 +11,9 @@ const requireRole = (roles) => {
 // This requires the request to have a target userId in params.id
 const requireHierarchy = async (request, reply) => {
   try {
-    await request.jwtVerify()
+    if (!request.user) {
+      return reply.code(401).send({ error: 'Unauthorized' })
+    }
     const requesterId = request.user.id
     const targetUserId = parseInt(request.params.id)
 

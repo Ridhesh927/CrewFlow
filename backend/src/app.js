@@ -31,8 +31,11 @@ fastify.register(cors, {
 })
 
 fastify.register(require('@fastify/multipart'), { attachFieldsToBody: false })
+if (!process.env.COOKIE_SECRET) {
+  throw new Error('FATAL: COOKIE_SECRET environment variable is not defined.');
+}
 fastify.register(require('@fastify/cookie'), {
-  secret: process.env.COOKIE_SECRET || 'my-cookie-secret',
+  secret: process.env.COOKIE_SECRET,
 })
 fastify.register(require('@fastify/rate-limit'), {
   max: 100,
