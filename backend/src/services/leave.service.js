@@ -46,12 +46,13 @@ const getLeaveRequests = async (user) => {
 
 const approveLeaveRequest = async (leaveId, approver) => {
   const { role, id: approverId } = approver;
+  const id = parseInt(leaveId, 10);
+  if (isNaN(id)) throw new ApiError(400, 'Invalid leave request ID');
 
   const leaveRequest = await prisma.leaveRequest.findUnique({
-    where: { id: parseInt(leaveId) },
+    where: { id },
     include: { user: true }
   });
-
   if (!leaveRequest) {
     throw new ApiError(404, 'Leave request not found');
   }
@@ -60,79 +61,52 @@ const approveLeaveRequest = async (leaveId, approver) => {
     throw new ApiError(403, 'Unauthorized to approve this leave request');
   }
 
-  const updatedLeaveRequest = await prisma.leaveRequest.update({
-    where: { id: parseInt(leaveId) },
-    data: { status: 'APPROVED' }
+  // Use an atomic transaction for all database writes
+  return await prisma.$transaction(async (tx) => {
+    const updatedLeaveRequest = await tx.leaveRequest.update({
+      where: { id },
+      data: { status: 'APPROVED' }
+    });
+
+    const start = new Date(updatedLeaveRequest.startDate);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(updatedLeaveRequest.endDate);
+    end.setUTCHours(0, 0, 0, 0);
+
+    let current = new Date(start);
+    while (current <= end) {
+      const existingAttendance = await tx.attendance.findFirst({
+        where: {
+          userId: updatedLeaveRequest.userId,
+          date: new Date(current)
+        }
+      });
+
+      if (!existingAttendance) {
+        await tx.attendance.create({
+          data: {
+            userId: updatedLeaveRequest.userId,
+            date: new Date(current),
+            status: 'Leave',
+            markedBy: approverId,
+            remarks: 'Approved leave request'
+          }
+        });
+      } else {
+        await tx.attendance.update({
+          where: { id: existingAttendance.id },
+          data: {
+            status: 'Leave',
+            markedBy: approverId,
+            remarks: 'Updated due to approved leave request'
+          }
+        });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return updatedLeaveRequest;
   });
-
-  // Normalize start and end dates to midnight to avoid time component issues
-  const start = new Date(updatedLeaveRequest.startDate);
-  start.setUTCHours(0, 0, 0, 0);
-  const end = new Date(updatedLeaveRequest.endDate);
-  end.setUTCHours(0, 0, 0, 0);
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const current = new Date(d);
-    const existingAttendance = await prisma.attendance.findFirst({
-      where: {
-        userId: updatedLeaveRequest.userId,
-        date: current
-      }
-    });
-
-    if (!existingAttendance) {
-      await prisma.attendance.create({
-        data: {
-          userId: updatedLeaveRequest.userId,
-          date: current,
-          status: 'Leave',
-          markedBy: approverId,
-          remarks: 'Approved leave request'
-        }
-      });
-    } else {
-      await prisma.attendance.update({
-        where: { id: existingAttendance.id },
-        data: {
-          status: 'Leave',
-          markedBy: approverId,
-          remarks: 'Updated due to approved leave request'
-        }
-      });
-    }
-  }
-    const current = new Date(d);
-    
-    const existingAttendance = await prisma.attendance.findFirst({
-      where: {
-        userId: updatedLeaveRequest.userId,
-        date: current
-      }
-    });
-
-    if (!existingAttendance) {
-      await prisma.attendance.create({
-        data: {
-          userId: updatedLeaveRequest.userId,
-          date: current,
-          status: 'Leave',
-          markedBy: approverId,
-          remarks: 'Approved leave request'
-        }
-      });
-    } else {
-      await prisma.attendance.update({
-        where: { id: existingAttendance.id },
-        data: {
-          status: 'Leave',
-          markedBy: approverId,
-          remarks: 'Updated due to approved leave request'
-        }
-      });
-    }
-  }
-
-  return updatedLeaveRequest;
 };
 
 const rejectLeaveRequest = async (leaveId, approver) => {
