@@ -7,6 +7,10 @@ const createAnnouncement = async (announcementData, author) => {
 
   const isGlobal = !targetRole && !targetDepartment;
   
+  if (role === 'INTERN') {
+    throw new ApiError(403, 'Interns are not authorized to create announcements');
+  }
+  
   if (isGlobal && role !== 'ADMIN' && role !== 'SENIOR_TL') {
     throw new ApiError(403, 'Only ADMIN and SENIOR_TL can create global announcements');
   }
