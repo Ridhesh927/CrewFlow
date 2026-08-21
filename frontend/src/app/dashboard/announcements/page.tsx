@@ -69,7 +69,7 @@ function CreateAnnouncementDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={o => { setOpen(o); if (!o) setError(""); }}>
+    <Dialog open={open} onOpenChange={(o: boolean) => { setOpen(o); if (!o) setError(""); }}>
       <DialogTrigger render={<Button />}>
         <Plus className="mr-2 h-4 w-4" /> Create Announcement
       </DialogTrigger>
