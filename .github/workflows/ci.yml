@@ -23,7 +23,8 @@ jobs:
         run: npm ci
         
       - name: Build Frontend
-        run: npm run build --workspace=frontend
+        working-directory: ./frontend
+        run: npm run build
 
   backend-build:
     name: Build Backend
@@ -41,4 +42,5 @@ jobs:
         run: npm ci
         
       - name: Generate Prisma Client
-        run: npx prisma generate --workspace=backend
+        working-directory: ./backend
+        run: npx prisma generate
