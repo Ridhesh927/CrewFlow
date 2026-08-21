@@ -26,7 +26,7 @@ jobs:
         run: npm ci --legacy-peer-deps
         
       - name: Rebuild native modules
-        run: npm rebuild || true
+        run: npm rebuild
         
       - name: Build Next.js
         run: npm run build
