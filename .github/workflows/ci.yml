@@ -23,10 +23,10 @@ jobs:
           node-version: '24'
           
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         
       - name: Rebuild native modules
-        run: npm rebuild --build-from-source || true
+        run: npm rebuild || true
         
       - name: Build Next.js
         run: npm run build
