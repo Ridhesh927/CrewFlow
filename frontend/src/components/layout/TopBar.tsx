@@ -112,6 +112,16 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                 ))
               )}
             </div>
+            <DropdownMenuSeparator />
+            <div className="p-2">
+              <Button 
+                variant="outline" 
+                className="w-full text-xs" 
+                onClick={() => router.push('/dashboard/notifications')}
+              >
+                View all notifications
+              </Button>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

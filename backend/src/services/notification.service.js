@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const emailService = require('./email.service');
 
 /**
  * Creates a notification for a specific user
@@ -7,13 +8,31 @@ const prisma = require('../prismaClient');
  * @param {string} message 
  */
 const createNotification = async (userId, type, message) => {
-  return await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId,
       type,
       message
     }
   });
+
+  // Optionally dispatch an email for important notifications (like warnings or success)
+  if (type === 'WARNING' || type === 'SUCCESS') {
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.email) {
+        // We reuse the transporter conceptually, though emailService currently only exposes sendPasswordResetEmail.
+        // Let's add a generic sendNotificationEmail to emailService and call it here.
+        if (emailService.sendNotificationEmail) {
+          await emailService.sendNotificationEmail(user.email, type, message);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send notification email:', error);
+    }
+  }
+
+  return notification;
 };
 
 /**

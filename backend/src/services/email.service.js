@@ -2,11 +2,23 @@ const nodemailer = require('nodemailer');
 
 // For development, we use streamTransport to just mock the email.
 // In production, configure SMTP using process.env
-const transporter = nodemailer.createTransport({
-  streamTransport: true,
-  newline: 'windows',
-  logger: false
-});
+const transporter = nodemailer.createTransport(
+  process.env.SMTP_HOST
+    ? {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT || 587,
+        secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      }
+    : {
+        streamTransport: true,
+        newline: 'windows',
+        logger: false,
+      }
+);
 
 const sendPasswordResetEmail = async (toEmail, resetToken) => {
   const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
@@ -37,6 +49,25 @@ const sendPasswordResetEmail = async (toEmail, resetToken) => {
   }
 };
 
+const sendNotificationEmail = async (toEmail, type, message) => {
+  const mailOptions = {
+    from: '"CrewFlow Notifications" <noreply@crewflow.com>',
+    to: toEmail,
+    subject: `New Notification: ${type}`,
+    text: `You have a new ${type} notification from CrewFlow:\n\n${message}\n\nLogin to your dashboard to view more details.`,
+    html: `<h3>New Notification (${type})</h3><p>${message}</p><p><a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard">Login to Dashboard</a></p>`,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`\n📧 NOTIFICATION EMAIL SENT to ${toEmail} [${type}]`);
+    return info;
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+  }
+};
+
 module.exports = {
   sendPasswordResetEmail,
+  sendNotificationEmail
 };
