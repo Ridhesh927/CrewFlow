@@ -15,7 +15,8 @@ import {
   FileText,
   User,
   Coffee,
-  Shield
+  Shield,
+  BarChart3
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -52,6 +53,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: any, 
         { name: "User Management", href: "/dashboard/users", icon: Users },
         { name: "All Attendance", href: "/dashboard/attendance", icon: CalendarDays },
         { name: "Ratings Overview", href: "/dashboard/ratings", icon: Star },
+        { name: "Analytics & Reports", href: "/dashboard/analytics", icon: BarChart3 },
         { name: "Campaigns", href: "/dashboard/tasks", icon: CheckSquare },
         { name: "Audit Logs", href: "/dashboard/audit", icon: Shield },
       ];
@@ -63,6 +65,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: any, 
         { name: "User Management", href: "/dashboard/users", icon: Users },
         { name: "My Team", href: "/dashboard/team", icon: Users },
         { name: "Attendance", href: "/dashboard/attendance", icon: CalendarDays },
+        { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
         { name: "Verify Proofs", href: "/dashboard/tasks", icon: CheckSquare },
       ];
     }
