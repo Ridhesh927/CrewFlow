@@ -3,7 +3,7 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Check, CheckAll } from "lucide-react";
+import { Check, CheckCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function NotificationHistory() {
@@ -38,7 +38,7 @@ export function NotificationHistory() {
         </div>
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead} variant="outline" className="flex items-center gap-2">
-            <CheckAll className="h-4 w-4" />
+            <CheckCheck className="h-4 w-4" />
             Mark all as read
           </Button>
         )}
