@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const prisma = require('../plugins/prisma');
+const prisma = require('../prismaClient');
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -31,15 +31,19 @@ const cleanupProofs = async () => {
     let cleanedCount = 0;
 
     for (const proof of proofsToCleanup) {
-      // Extract public_id from Cloudinary URL
-      // Example URL: https://res.cloudinary.com/demo/image/upload/v1582236316/sample.jpg
-      const urlParts = proof.imageUrl.split('/');
-      const filenameWithExtension = urlParts[urlParts.length - 1];
-      const publicId = filenameWithExtension.split('.')[0];
-      const folderPath = urlParts[urlParts.length - 2] === 'upload' ? '' : urlParts[urlParts.length - 2] + '/';
+      // Extract public_id from Cloudinary URL handling nested folders
+      // Example URL: https://res.cloudinary.com/demo/image/upload/v1582236316/crewflow/proofs/sample.jpg
+      const regex = /\/upload\/(?:v\d+\/)?(.+?)\.[^.]+$/;
+      const match = proof.imageUrl.match(regex);
+      const publicId = match ? match[1] : null;
+
+      if (!publicId) {
+        console.error(`[Cron Job] Failed to extract publicId from URL: ${proof.imageUrl}`);
+        continue;
+      }
 
       try {
-        await cloudinary.uploader.destroy(folderPath + publicId);
+        await cloudinary.uploader.destroy(publicId);
         
         await prisma.proof.update({
           where: { id: proof.id },
