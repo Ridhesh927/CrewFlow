@@ -4,6 +4,7 @@ const prisma = require('../prismaClient');
 const crypto = require('crypto');
 const emailService = require('./email.service');
 const ApiError = require('../plugins/ApiError');
+const redis = require('../config/redis');
 
 if (!process.env.JWT_REFRESH_SECRET) {
   throw new Error('FATAL: JWT_REFRESH_SECRET environment variable is not defined.');
@@ -54,6 +55,9 @@ const login = async (identifier, password, fastifyJwt) => {
 
   const { accessToken, refreshToken } = generateTokens(user, fastifyJwt);
   
+  // Store refresh token in Redis with a 7-day expiration
+  await redis.set(`refresh_token:${user.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
+  
   const userWithoutPassword = { ...user };
   delete userWithoutPassword.password;
   
@@ -93,13 +97,25 @@ const refresh = async (currentRefreshToken, fastifyJwt) => {
 
   try {
     const decoded = jwt.verify(currentRefreshToken, process.env.JWT_REFRESH_SECRET);
+    
+    // Check if the refresh token is valid in Redis
+    const tokenStatus = await redis.get(`refresh_token:${decoded.id}:${currentRefreshToken}`);
+    if (!tokenStatus) {
+      throw new ApiError(401, 'Invalid or expired refresh token in session');
+    }
+
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
     
     if (!user || !user.isActive) {
       throw new ApiError(401, 'Invalid refresh token');
     }
 
+    // Generate new tokens
     const { accessToken, refreshToken } = generateTokens(user, fastifyJwt);
+
+    // Replace old refresh token with new one in Redis
+    await redis.del(`refresh_token:${decoded.id}:${currentRefreshToken}`);
+    await redis.set(`refresh_token:${decoded.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
 
     return { accessToken, refreshToken };
   } catch (err) {
@@ -166,10 +182,17 @@ const resetPassword = async (token, newPassword) => {
   return { success: true, message: 'Password has been successfully reset' };
 };
 
+const logout = async (userId, refreshToken) => {
+  if (userId && refreshToken) {
+    await redis.del(`refresh_token:${userId}:${refreshToken}`);
+  }
+};
+
 module.exports = {
   login,
   changePassword,
   refresh,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  logout
 };

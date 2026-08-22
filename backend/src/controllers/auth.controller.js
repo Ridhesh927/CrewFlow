@@ -76,6 +76,20 @@ const refresh = async (request, reply) => {
 }
 
 const logout = async (request, reply) => {
+  const currentRefreshToken = request.cookies.refreshToken;
+  
+  if (currentRefreshToken) {
+    try {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.decode(currentRefreshToken);
+      if (decoded && decoded.id) {
+        await authService.logout(decoded.id, currentRefreshToken);
+      }
+    } catch (error) {
+      request.log.error('Error during logout:', error);
+    }
+  }
+
   reply.clearCookie('refreshToken', {
     path: '/'
   });
