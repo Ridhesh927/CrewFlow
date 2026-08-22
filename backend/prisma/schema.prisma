@@ -13,7 +13,8 @@ model User {
   password     String
   name         String
   role         Role         @default(INTERN)
-  department   String       // Used as Group [which project]
+  departmentId Int?
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   specialId    String?      @unique
   phoneNo      String?
   isActive     Boolean      @default(true)
@@ -34,6 +35,16 @@ model User {
   resetTokenExpiry DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Attendance {
