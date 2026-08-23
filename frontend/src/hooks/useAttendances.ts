@@ -17,8 +17,15 @@ export const useGetAttendances = (startDate?: string, endDate?: string) => {
 
 export const useMarkAttendance = () => {
   const queryClient = useQueryClient();
+  type MarkAttendancePayload = {
+    targetUserId: number;
+    date: string;
+    status: string;
+    remarks?: string;
+  };
+
   return useMutation({
-    mutationFn: (data) => executeApiRequest('/attendances/mark', {
+    mutationFn: (data: MarkAttendancePayload) => executeApiRequest('/attendances/mark', {
       method: 'POST',
       body: JSON.stringify(data)
     }),
