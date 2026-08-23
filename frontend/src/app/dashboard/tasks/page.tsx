@@ -112,7 +112,7 @@ function CreateTaskDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Target Audience</Label>
-              <Select value={form.targetAudience} onValueChange={v => setForm(f => ({ ...f, targetAudience: v }))}>
+              <Select value={form.targetAudience} onValueChange={v => setForm(f => ({ ...f, targetAudience: v || "" }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Groups</SelectItem>

@@ -16,7 +16,7 @@ export const useDashboard = (userId) => {
         setLoading(true);
         const result = await executeApiRequest(`/users/${userId}/dashboard`);
         setData(result);
-      } catch (err) {
+      } catch (err: any) {
         setError(err.message);
       } finally {
         setLoading(false);

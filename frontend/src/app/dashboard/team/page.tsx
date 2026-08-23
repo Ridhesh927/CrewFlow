@@ -50,7 +50,7 @@ function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: a
         <form onSubmit={handleReassign} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label>Select New Manager</Label>
-            <Select value={managerId} onValueChange={setManagerId}>
+            <Select value={managerId} onValueChange={v => setManagerId(v || "none")}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a manager" />
               </SelectTrigger>

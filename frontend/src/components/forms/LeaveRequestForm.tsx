@@ -8,7 +8,7 @@ import * as z from 'zod';
 // Define Zod schema with strict date validation logic
 const leaveSchema = z.object({
   leaveType: z.enum(['CASUAL', 'SICK', 'VACATION'], {
-    errorMap: () => ({ message: 'Please select a valid leave type.' }),
+    message: 'Please select a valid leave type.'
   }),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
@@ -18,7 +18,7 @@ const leaveSchema = z.object({
   path: ['endDate'], // Binds error to the endDate input field
 });
 
-export default function LeaveRequestForm({ onSubmitSuccess }) {
+export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?: () => void }) {
   const {
     register,
     handleSubmit,
@@ -27,7 +27,7 @@ export default function LeaveRequestForm({ onSubmitSuccess }) {
     resolver: zodResolver(leaveSchema),
   });
 
-  const onFormSubmit = async (data) => {
+  const onFormSubmit = async (data: z.infer<typeof leaveSchema>) => {
     try {
       // apiClient POST logic here
       console.log('Valid Form Data:', data);

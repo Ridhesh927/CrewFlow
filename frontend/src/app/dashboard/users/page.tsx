@@ -128,8 +128,8 @@ export default function UsersPage() {
 
   const users = data?.users || [];
 
-  const departments = ["ALL", ...new Set(users.map(u => u.department).filter(Boolean))];
-  const roles = ["ALL", ...new Set(users.map(u => u.role).filter(Boolean))];
+  const departments = ["ALL", ...Array.from(new Set(users.map((u: any) => u.department).filter(Boolean)))] as string[];
+  const roles = ["ALL", ...Array.from(new Set(users.map((u: any) => u.role).filter(Boolean)))] as string[];
   
   let filteredUsers = users.filter(u => {
     const matchesDept = departmentFilter === "ALL" || u.department === departmentFilter;
@@ -181,7 +181,7 @@ export default function UsersPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+          <Select value={departmentFilter} onValueChange={v => setDepartmentFilter(v || "ALL")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Group" />
             </SelectTrigger>
@@ -191,7 +191,7 @@ export default function UsersPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <Select value={roleFilter} onValueChange={v => setRoleFilter(v || "ALL")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
@@ -201,7 +201,7 @@ export default function UsersPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={v => setStatusFilter(v || "ALL")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -211,7 +211,7 @@ export default function UsersPage() {
               <SelectItem value="DISABLED">Disabled</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={pointsSort} onValueChange={setPointsSort}>
+          <Select value={pointsSort} onValueChange={v => setPointsSort(v || "DEFAULT")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Sort Points" />
             </SelectTrigger>
@@ -289,7 +289,7 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
+                  <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val || ""})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
@@ -469,7 +469,7 @@ export default function UsersPage() {
           {confirmDialog.type === 'editRole' && (
             <div className="py-4 space-y-2">
               <Label>New Role</Label>
-              <Select value={confirmDialog.newRole} onValueChange={(val) => setConfirmDialog({ ...confirmDialog, newRole: val })}>
+              <Select value={confirmDialog.newRole} onValueChange={(val) => setConfirmDialog({ ...confirmDialog, newRole: val || "" })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
@@ -497,7 +497,7 @@ export default function UsersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Manager</Label>
-                  <Select value={confirmDialog.editData?.managerId} onValueChange={(val) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, managerId: val}})}>
+                  <Select value={confirmDialog.editData?.managerId} onValueChange={(val) => setConfirmDialog({...confirmDialog, editData: {...confirmDialog.editData, managerId: val || "none"}})}>
                     <SelectTrigger><SelectValue placeholder="Select Manager" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No Manager</SelectItem>
