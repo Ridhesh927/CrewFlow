@@ -51,8 +51,8 @@ export default function AttendancePage() {
   const attendances = useMemo(() => data?.attendances || [], [data?.attendances]);
 
   // Extract unique filter options
-  const departments = ["ALL", ...new Set(attendances.map(a => a.user?.department).filter(Boolean))];
-  const roles = ["ALL", ...new Set(attendances.map(a => a.user?.role).filter(Boolean))];
+  const departments = ["ALL", ...new Set(attendances.map(a => a.user?.department).filter(Boolean))] as string[];
+  const roles = ["ALL", ...new Set(attendances.map(a => a.user?.role).filter(Boolean))] as string[];
   
   const getCellColor = (status) => {
     switch(status?.toUpperCase()) {
