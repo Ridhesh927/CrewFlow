@@ -255,7 +255,7 @@ export default function AttendancePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+          <Select value={departmentFilter} onValueChange={(val) => setDepartmentFilter(val || "ALL")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Group" />
             </SelectTrigger>
@@ -265,7 +265,7 @@ export default function AttendancePage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val || "ALL")}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
