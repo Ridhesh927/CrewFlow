@@ -10,7 +10,7 @@ import {
   useDeleteDocument
 } from "@/hooks/useDocuments";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -247,11 +247,9 @@ export default function DocumentsPage() {
               </CardContent>
               
               <CardFooter className="pt-0 pb-4">
-                <Button variant="outline" className="w-full" asChild>
-                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> Download / View
-                  </a>
-                </Button>
+                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                  <Download className="mr-2 h-4 w-4" /> Download / View
+                </a>
               </CardFooter>
             </Card>
           ))}
