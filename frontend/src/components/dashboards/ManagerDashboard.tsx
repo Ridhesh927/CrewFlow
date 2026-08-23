@@ -9,7 +9,7 @@ import { useDashboardMetrics, useTeamAnalytics } from "@/hooks/useAnalytics";
 import { useApproveProof, useRejectProof } from "@/hooks/useTasks";
 import { useRouter } from "next/navigation";
 
-export function ManagerDashboard({ role, userId }: { role: string; userId: number }) {
+export function ManagerDashboard({ role, userId }: { role: string; userId: number | string }) {
   const router = useRouter();
   const { mutate: approveProof, isPending: approving } = useApproveProof();
   const { mutate: rejectProof, isPending: rejecting } = useRejectProof();

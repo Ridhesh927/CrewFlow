@@ -15,10 +15,10 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
     setError(null);
@@ -46,7 +46,7 @@ export default function SettingsPage() {
         setNewPassword("");
         setConfirmPassword("");
       }
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || "Failed to update password.");
     } finally {
       setLoading(false);

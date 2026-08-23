@@ -24,7 +24,7 @@ export function useTeamAnalytics(department: any = "") {
   });
 }
 
-export function useUserTrends(userId: number) {
+export function useUserTrends(userId: any) {
   return useQuery({
     queryKey: ["analytics", "trends", userId],
     queryFn: () => executeApiRequest(`/analytics/trends/${userId}`),

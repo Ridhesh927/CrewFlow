@@ -8,7 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useDashboardMetrics, useUserAnalytics, useUserTrends } from "@/hooks/useAnalytics";
 import { useRouter } from "next/navigation";
 
-export function InternDashboard({ userId }: { userId: number }) {
+export function InternDashboard({ userId }: { userId: number | string }) {
   const router = useRouter();
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
   const { data: userData, isLoading: loadingUser } = useUserAnalytics(userId);

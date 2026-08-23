@@ -116,7 +116,7 @@ function AssignRatingDialog() {
           {/* User selector */}
           <div className="space-y-2">
             <Label>Select User *</Label>
-            <Select value={form.userId} onValueChange={v => setForm(f => ({ ...f, userId: v }))}>
+            <Select value={form.userId} onValueChange={v => setForm(f => ({ ...f, userId: v || "" }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a team member..." />
               </SelectTrigger>
@@ -286,7 +286,7 @@ export default function RatingsPage() {
             />
           </div>
 
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+          <Select value={departmentFilter} onValueChange={v => setDepartmentFilter(v || "ALL")}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Group" /></SelectTrigger>
             <SelectContent>
               {departments.map(dept => (
@@ -295,7 +295,7 @@ export default function RatingsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <Select value={roleFilter} onValueChange={v => setRoleFilter(v || "ALL")}>
             <SelectTrigger className="w-[130px]"><SelectValue placeholder="Role" /></SelectTrigger>
             <SelectContent>
               {roles.map(role => (
@@ -304,7 +304,7 @@ export default function RatingsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={monthFilter} onValueChange={setMonthFilter}>
+          <Select value={monthFilter} onValueChange={v => setMonthFilter(v || "ALL")}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Month" /></SelectTrigger>
             <SelectContent>
               {months.map(month => (
