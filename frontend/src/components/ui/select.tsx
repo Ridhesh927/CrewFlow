@@ -8,10 +8,28 @@ import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 const Select = SelectPrimitive.Root
 
+type SelectGroupProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Group>
+type SelectValueProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>
+type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
+  size?: "default" | "sm"
+}
+type SelectContentProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Popup> & {
+  side?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Positioner>["side"]
+  sideOffset?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Positioner>["sideOffset"]
+  align?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Positioner>["align"]
+  alignOffset?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Positioner>["alignOffset"]
+  alignItemWithTrigger?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Positioner>["alignItemWithTrigger"]
+}
+type SelectLabelProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.GroupLabel>
+type SelectItemProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+type SelectSeparatorProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
+type SelectScrollUpButtonProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpArrow>
+type SelectScrollDownButtonProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownArrow>
+
 function SelectGroup({
   className,
   ...props
-}) {
+}: SelectGroupProps) {
   return (
     <SelectPrimitive.Group
       data-slot="select-group"
@@ -23,7 +41,7 @@ function SelectGroup({
 function SelectValue({
   className,
   ...props
-}) {
+}: SelectValueProps) {
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
@@ -37,7 +55,7 @@ function SelectTrigger({
   size = "default",
   children,
   ...props
-}) {
+}: SelectTriggerProps) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -65,7 +83,7 @@ function SelectContent({
   alignOffset = 0,
   alignItemWithTrigger = true,
   ...props
-}) {
+}: SelectContentProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner
@@ -95,7 +113,7 @@ function SelectContent({
 function SelectLabel({
   className,
   ...props
-}) {
+}: SelectLabelProps) {
   return (
     <SelectPrimitive.GroupLabel
       data-slot="select-label"
@@ -108,7 +126,7 @@ function SelectItem({
   className,
   children,
   ...props
-}) {
+}: SelectItemProps) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -134,7 +152,7 @@ function SelectItem({
 function SelectSeparator({
   className,
   ...props
-}) {
+}: SelectSeparatorProps) {
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
@@ -146,7 +164,7 @@ function SelectSeparator({
 function SelectScrollUpButton({
   className,
   ...props
-}) {
+}: SelectScrollUpButtonProps) {
   return (
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up-button"
@@ -163,7 +181,7 @@ function SelectScrollUpButton({
 function SelectScrollDownButton({
   className,
   ...props
-}) {
+}: SelectScrollDownButtonProps) {
   return (
     <SelectPrimitive.ScrollDownArrow
       data-slot="select-scroll-down-button"
