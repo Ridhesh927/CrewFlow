@@ -107,7 +107,7 @@ function CreateAnnouncementDialog() {
               <Label>Target Group</Label>
               <Select 
                 value={form.targetDepartment} 
-                onValueChange={v => setForm(f => ({ ...f, targetDepartment: v === "ALL" ? "" : v }))}
+                onValueChange={v => setForm(f => ({ ...f, targetDepartment: v && v !== "ALL" ? v : "" }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Groups" />
@@ -126,7 +126,7 @@ function CreateAnnouncementDialog() {
               <Label>Target Role</Label>
               <Select 
                 value={form.targetRole} 
-                onValueChange={v => setForm(f => ({ ...f, targetRole: v === "ALL" ? "" : v }))}
+                onValueChange={v => setForm(f => ({ ...f, targetRole: v && v !== "ALL" ? v : "" }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Roles" />
