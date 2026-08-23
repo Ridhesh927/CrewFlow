@@ -82,7 +82,7 @@ export default function AttendancePage() {
     });
 
     // Extract unique dates, sorted chronologically
-    const dateSet = new Set();
+    const dateSet = new Set<string>();
     filteredAttendances.forEach(a => {
       if (a.date) {
         dateSet.add(new Date(a.date).toLocaleDateString('en-CA')); // Use YYYY-MM-DD in local timezone
@@ -90,7 +90,7 @@ export default function AttendancePage() {
     });
     
     // Sort oldest to newest (like the screenshot, left to right dates)
-    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b));
+    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
     // Group by user
     const userMap = new Map();
