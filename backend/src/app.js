@@ -24,6 +24,7 @@ const documentRoutes = require('./routes/document.routes')
 const notificationRoutes = require('./routes/notification.routes')
 const auditRoutes = require('./routes/audit.routes')
 const departmentRoutes = require('./routes/department.routes')
+const feedbackRoutes = require('./routes/feedback.routes')
 
 fastify.register(cors, { 
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -70,6 +71,7 @@ fastify.register(documentRoutes, { prefix: '/api/v1/documents' })
 fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' })
 fastify.register(auditRoutes, { prefix: '/api/v1/audit' })
 fastify.register(departmentRoutes, { prefix: '/api/v1/departments' })
+fastify.register(feedbackRoutes, { prefix: '/api/v1/feedback' })
 
 const errorHandler = require('./plugins/error.middleware')
 

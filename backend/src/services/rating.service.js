@@ -117,6 +117,13 @@ const createRating = async (ratingData, rater) => {
     }
   });
 
+  // Award points based on rating (e.g., 10 points per star)
+  const pointsToAward = ratingNum * 10;
+  await prisma.user.update({
+    where: { id: parseInt(userId) },
+    data: { points: { increment: pointsToAward } }
+  });
+
   await notificationService.createNotification(
     newRating.userId,
     'INFO',

@@ -16,7 +16,9 @@ import {
   User,
   Coffee,
   Shield,
-  BarChart3
+  BarChart3,
+  Trophy,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -41,7 +43,9 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: any, 
   const getNavLinks = () => {
     const commonLinks = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
       { name: "Leave Requests", href: "/dashboard/leave", icon: Coffee },
+      { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquare },
       { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
       { name: "Documents", href: "/dashboard/documents", icon: FileText },
       { name: "Profile & Settings", href: "/dashboard/profile", icon: User },
