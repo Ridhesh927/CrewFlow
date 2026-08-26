@@ -196,4 +196,29 @@ const bulkUpdateDepartment = async (request, reply) => {
   }
 }
 
-module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile, bulkUpdateDepartment }
+const bulkUploadUsers = async (request, reply) => {
+  const data = await request.file();
+  if (!data) {
+    return reply.code(400).send({ error: 'No file uploaded' });
+  }
+  
+  const requesterId = request.user.id;
+  try {
+    const result = await userService.bulkUploadUsers(data.file, requesterId);
+    
+    await auditService.logAction({
+      userId: requesterId,
+      action: 'USERS_BULK_UPLOADED',
+      resource: 'User',
+      details: { count: result.count },
+      ipAddress: request.ip
+    });
+
+    return { success: true, count: result.count, errors: result.errors };
+  } catch (error) {
+    if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
+    throw error;
+  }
+}
+
+module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile, bulkUpdateDepartment, bulkUploadUsers }

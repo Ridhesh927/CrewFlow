@@ -140,3 +140,23 @@ export function useBulkUpdateDepartment() {
     }
   });
 }
+
+export function useBulkUploadUsers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      executeApiRequest(`/users/bulk-upload`, {
+        method: "POST",
+        body: formData,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Users uploaded successfully");
+    },
+    onError: (err: any) => {
+      toast.error("Bulk upload failed", { description: err.message });
+      console.error(err);
+    }
+  });
+}

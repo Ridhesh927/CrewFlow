@@ -40,6 +40,12 @@ async function userRoutes(fastify, options) {
     userController.createUser
   )
 
+  fastify.post(
+    '/bulk-upload',
+    { preValidation: [fastify.authenticate, requireRole(['ADMIN'])] },
+    userController.bulkUploadUsers
+  )
+
   fastify.put(
     '/:id/promote',
     { preValidation: [fastify.authenticate, requireHierarchy] },

@@ -4,6 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import apiClient from '@/lib/api-client';
 
 // Define Zod schema with strict date validation logic
 const leaveSchema = z.object({
@@ -29,8 +30,13 @@ export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?
 
   const onFormSubmit = async (data: z.infer<typeof leaveSchema>) => {
     try {
-      // apiClient POST logic here
-      console.log('Valid Form Data:', data);
+      await apiClient.post('/leaves', {
+        startDate: data.startDate,
+        endDate: data.endDate,
+        reason: data.reason,
+        // The backend schema expects leaveType if we update it, but let's just pass what we have
+      });
+      console.log('Leave requested successfully');
       if (onSubmitSuccess) {
         onSubmitSuccess();
       }

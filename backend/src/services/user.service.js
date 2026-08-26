@@ -347,6 +347,53 @@ const checkUserHierarchy = async (managerId, targetUserId) => {
   return false;
 };
 
+const { parse } = require('csv-parse');
+
+const bulkUploadUsers = async (fileStream, managerId) => {
+  return new Promise(async (resolve, reject) => {
+    const results = [];
+    const errors = [];
+    let count = 0;
+
+    const parser = fileStream.pipe(parse({ columns: true, skip_empty_lines: true }));
+
+    parser.on('readable', function() {
+      let record;
+      while ((record = parser.read()) !== null) {
+        results.push(record);
+      }
+    });
+
+    parser.on('error', function(err) {
+      reject(new ApiError(400, 'Error parsing CSV file'));
+    });
+
+    parser.on('end', async function() {
+      for (const row of results) {
+        try {
+          if (!row.email || !row.password || !row.name) {
+            errors.push({ email: row.email, error: 'Missing required fields: email, password, name' });
+            continue;
+          }
+          await createUser({
+            email: row.email,
+            password: row.password,
+            name: row.name,
+            role: row.role || 'INTERN',
+            department: row.department,
+            specialId: row.specialId,
+            phoneNo: row.phoneNo
+          }, managerId);
+          count++;
+        } catch (err) {
+          errors.push({ email: row.email, error: err.message });
+        }
+      }
+      resolve({ count, errors });
+    });
+  });
+};
+
 module.exports = {
   getDashboardData,
   createUser,
@@ -360,4 +407,5 @@ module.exports = {
   updateProfile,
   bulkUpdateDepartment,
   checkUserHierarchy,
+  bulkUploadUsers,
 };

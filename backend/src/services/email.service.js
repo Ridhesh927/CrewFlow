@@ -66,8 +66,31 @@ const sendNotificationEmail = async (toEmail, type, message) => {
     console.error('Error sending notification email:', error);
   }
 };
+const sendReportEmail = async (toEmail, subject, text, pdfBuffer, filename) => {
+  const mailOptions = {
+    from: '"CrewFlow Reports" <reports@crewflow.com>',
+    to: toEmail,
+    subject: subject,
+    text: text,
+    attachments: [
+      {
+        filename: filename,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      }
+    ]
+  };
 
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`\n📧 REPORT EMAIL SENT to ${toEmail}`);
+    return info;
+  } catch (error) {
+    console.error('Error sending report email:', error);
+  }
+};
 module.exports = {
   sendPasswordResetEmail,
-  sendNotificationEmail
+  sendNotificationEmail,
+  sendReportEmail
 };

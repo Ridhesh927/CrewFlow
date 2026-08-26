@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog } from "lucide-react";
+import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog, Upload } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment } from "@/hooks/useUsers";
+import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment, useBulkUploadUsers } from "@/hooks/useUsers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,10 @@ export default function UsersPage() {
   const [bulkDepartment, setBulkDepartment] = useState("");
   const [showBulkDialog, setShowBulkDialog] = useState(false);
   const bulkUpdateDepartment = useBulkUpdateDepartment();
+  
+  const [showCsvDialog, setShowCsvDialog] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const bulkUploadUsers = useBulkUploadUsers();
 
   const handleSelectUser = (id: number) => {
     setSelectedUserIds(prev => 
@@ -114,6 +118,18 @@ export default function UsersPage() {
         }
       }
     );
+  };
+
+  const handleCsvUpload = () => {
+    if (!csvFile) return;
+    const formData = new FormData();
+    formData.append("file", csvFile);
+    bulkUploadUsers.mutate(formData, {
+      onSuccess: () => {
+        setShowCsvDialog(false);
+        setCsvFile(null);
+      }
+    });
   };
 
   const handleSubmit = (e) => {
@@ -248,6 +264,36 @@ export default function UsersPage() {
                     <Button onClick={handleBulkUpdate} disabled={bulkUpdateDepartment.isPending || !bulkDepartment}>
                       {bulkUpdateDepartment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Update Groups
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {currentUser?.role === 'ADMIN' && (
+            <Dialog open={showCsvDialog} onOpenChange={setShowCsvDialog}>
+              <DialogTrigger render={<Button variant="outline" className="mr-2" />}>
+                <Upload className="mr-2 h-4 w-4" /> Bulk Upload (CSV)
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bulk Upload Users</DialogTitle>
+                  <DialogDescription>
+                    Upload a CSV file containing user details to onboard multiple users at once.
+                    Required columns: email, password, name. Optional: role, department, specialId, phoneNo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="csvFile">CSV File</Label>
+                    <Input id="csvFile" type="file" accept=".csv" onChange={(e) => setCsvFile(e.target.files?.[0] || null)} />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button variant="outline" onClick={() => setShowCsvDialog(false)}>Cancel</Button>
+                    <Button onClick={handleCsvUpload} disabled={bulkUploadUsers.isPending || !csvFile}>
+                      {bulkUploadUsers.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Upload Users
                     </Button>
                   </div>
                 </div>
