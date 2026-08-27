@@ -1,6 +1,7 @@
 const argon2 = require('argon2');
 const prisma = require('../prismaClient');
 const ApiError = require('../plugins/ApiError');
+const redis = require('../config/redis');
 
 const getDashboardData = async (userId) => {
   const user = await prisma.user.findUnique({
@@ -206,6 +207,13 @@ const toggleUserStatus = async (userId) => {
     where: { id: userId },
     data: { isActive: !user.isActive }
   });
+
+  if (updatedUser.isActive === false) {
+    const keys = await redis.keys(`refresh_token:${userId}:*`);
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
 
   return updatedUser.isActive;
 };

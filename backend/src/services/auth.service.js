@@ -129,6 +129,12 @@ const changePassword = async (userId, currentPassword, newPassword) => {
     data: { password: hashedNewPassword }
   });
 
+  // Revoke all active sessions
+  const keys = await redis.keys(`refresh_token:${userId}:*`);
+  if (keys.length > 0) {
+    await redis.del(...keys);
+  }
+
   return { success: true };
 };
 
@@ -220,6 +226,12 @@ const resetPassword = async (token, newPassword) => {
       resetTokenExpiry: null
     }
   });
+
+  // Revoke all active sessions
+  const keys = await redis.keys(`refresh_token:${user.id}:*`);
+  if (keys.length > 0) {
+    await redis.del(...keys);
+  }
 
   return { success: true, message: 'Password has been successfully reset' };
 };

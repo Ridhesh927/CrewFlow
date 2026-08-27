@@ -8,6 +8,7 @@ const fastify = require('fastify')({
       },
     },
   },
+  bodyLimit: 1048576 // 1MB payload limit
 })
 const cors = require('@fastify/cors')
 const prismaPlugin = require('./plugins/prisma')
@@ -52,6 +53,7 @@ fastify.register(fastifySession, {
   }
 });
 
+fastify.register(require('@fastify/helmet'), { global: true })
 fastify.register(require('@fastify/rate-limit'), {
   max: 100,
   timeWindow: '1 minute'
