@@ -120,16 +120,7 @@ const deleteUser = async (request, reply) => {
   const userId = parseInt(request.params.id);
   
   try {
-    await userService.deleteUser(userId);
-
-    await auditService.logAction({
-      userId: request.user.id,
-      action: 'USER_DELETED',
-      resource: 'User',
-      resourceId: userId,
-      ipAddress: request.ip
-    });
-
+    await userService.deleteUser(userId, request.user);
     return { success: true };
   } catch (error) {
     if (error.statusCode) {

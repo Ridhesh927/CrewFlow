@@ -16,6 +16,7 @@ interface AuthState {
   isAuthenticated: boolean;
   error: string | null;
   login: (identifier: string, password: string) => Promise<boolean>;
+  googleLogin: (idToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -26,6 +27,26 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       error: null,
+
+      googleLogin: async (idToken) => {
+        try {
+          set({ error: null });
+          const data = await executeApiRequest('/auth/google-login', {
+            method: 'POST',
+            body: JSON.stringify({ idToken }),
+          });
+
+          if (data.success) {
+            localStorage.setItem('jwt_token', data.token);
+            set({ user: data.user, token: data.token, isAuthenticated: true });
+            return true;
+          }
+          return false;
+        } catch (err: any) {
+          set({ error: err.message || 'Google Login failed' });
+          return false;
+        }
+      },
 
       // Real login function using API
       login: async (identifier, password) => {

@@ -122,4 +122,39 @@ const resetPassword = async (request, reply) => {
   }
 };
 
-module.exports = { login, changePassword, refresh, logout, forgotPassword, resetPassword }
+const googleLogin = async (request, reply) => {
+  const { idToken } = request.body;
+
+  try {
+    const { accessToken, refreshToken, user } = await authService.googleLogin(idToken, request.server.jwt);
+
+    await auditService.logAction({
+      userId: user.id,
+      action: 'USER_LOGIN_GOOGLE',
+      resource: 'User',
+      resourceId: user.id,
+      ipAddress: request.ip
+    });
+
+    reply.setCookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in ms
+    });
+
+    return { success: true, token: accessToken, user };
+  } catch (error) {
+    await auditService.logAction({
+      action: 'FAILED_LOGIN_GOOGLE',
+      resource: 'User',
+      details: { reason: error.message },
+      ipAddress: request.ip
+    });
+
+    throw error;
+  }
+};
+
+module.exports = { login, googleLogin, changePassword, refresh, logout, forgotPassword, resetPassword }

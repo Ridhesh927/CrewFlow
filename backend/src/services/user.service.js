@@ -210,14 +210,32 @@ const toggleUserStatus = async (userId) => {
   return updatedUser.isActive;
 };
 
-const deleteUser = async (userId) => {
+const auditService = require('./audit.service');
+
+const deleteUser = async (userId, requester) => {
   if (userId === 1) {
     throw new ApiError(403, 'Cannot delete the primary admin account');
   }
 
+  const userToRestore = await prisma.user.findUnique({
+    where: { id: userId }
+  });
+
+  if (!userToRestore) throw new ApiError(404, 'User not found');
+
   await prisma.user.delete({
     where: { id: userId }
   });
+
+  if (requester) {
+    await auditService.logAction({
+      userId: requester.id,
+      action: 'USER_DELETED',
+      resource: 'User',
+      resourceId: userId,
+      details: { snapshot: userToRestore }
+    });
+  }
 };
 
 const getUserById = async (userId) => {

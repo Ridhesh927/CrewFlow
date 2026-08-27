@@ -64,6 +64,48 @@ const login = async (identifier, password, fastifyJwt) => {
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const googleLogin = async (idToken, fastifyJwt) => {
+  if (!idToken) throw new ApiError(400, 'ID Token is required');
+
+  let ticket;
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch (err) {
+    throw new ApiError(401, 'Invalid Google token');
+  }
+
+  const payload = ticket.getPayload();
+  const email = payload.email;
+
+  // Find user by email
+  let user = await prisma.user.findUnique({ where: { email } });
+
+  // Map to existing or return error if not allowed to auto-register
+  if (!user) {
+    // Optionally: auto-register user if domain is @uptoskills.com
+    // For now, throw an error if user doesn't exist in our DB
+    throw new ApiError(404, 'No account associated with this Google email. Please contact Admin.');
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(403, 'Your account has been disabled.');
+  }
+
+  const { accessToken, refreshToken } = generateTokens(user, fastifyJwt);
+  await redis.set(`refresh_token:${user.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
+
+  const userWithoutPassword = { ...user };
+  delete userWithoutPassword.password;
+
+  return { accessToken, refreshToken, user: userWithoutPassword };
+};
+
 const changePassword = async (userId, currentPassword, newPassword) => {
   const user = await prisma.user.findUnique({
     where: { id: userId }
@@ -190,6 +232,7 @@ const logout = async (userId, refreshToken) => {
 
 module.exports = {
   login,
+  googleLogin,
   changePassword,
   refresh,
   forgotPassword,

@@ -12,6 +12,7 @@ async function authRoutes(fastify, options) {
     },
     preHandler: [validate(loginSchema)] 
   }, authController.login)
+  fastify.post('/google-login', authController.googleLogin)
   fastify.post('/refresh', authController.refresh)
   fastify.post('/logout', authController.logout)
   fastify.post('/change-password', { preValidation: [fastify.authenticate], preHandler: [validate(changePasswordSchema)] }, authController.changePassword)
