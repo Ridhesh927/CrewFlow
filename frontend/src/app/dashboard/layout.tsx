@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 
 export default function DashboardLayout({ children }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -38,6 +39,8 @@ export default function DashboardLayout({ children }) {
           </div>
         </main>
       </div>
+      
+      <ChatDrawer />
     </div>
   );
 }

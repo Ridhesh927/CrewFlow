@@ -408,6 +408,18 @@ function ManagerTasksView({ userRole }: { userRole: string }) {
                             {proof.intern?.specialId && ` · ${proof.intern.specialId}`}
                           </p>
                           <p className="text-xs text-muted-foreground">{proof.intern?.department}</p>
+                          <div className="flex gap-2 mt-1">
+                            {proof.aiVerified && (
+                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] px-1.5 py-0">
+                                AI Verified
+                              </Badge>
+                            )}
+                            {proof.aiFlagged && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 text-[10px] px-1.5 py-0 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> Suspicious
+                              </Badge>
+                            )}
+                          </div>
                           {proof.task?.subTasks?.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {proof.task.subTasks.map((st: any) => (

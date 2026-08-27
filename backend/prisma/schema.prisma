@@ -90,6 +90,8 @@ model Proof {
   status    String   @default("Pending") // Pending, Approved, Rejected
   imageUrl  String?
   completedSubTasks Int[]
+  aiVerified Boolean @default(false)
+  aiFlagged  Boolean @default(false)
   timestamp DateTime @default(now())
 }
 

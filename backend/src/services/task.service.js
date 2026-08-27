@@ -87,6 +87,43 @@ const createTask = async (taskData) => {
   return task;
 };
 
+const vision = require('@google-cloud/vision');
+let visionClient;
+try {
+  visionClient = new vision.ImageAnnotatorClient();
+} catch (e) {
+  console.warn('Google Cloud Vision Client failed to initialize:', e.message);
+}
+
+const verifyProofImage = async (imageUrl) => {
+  if (!visionClient || !imageUrl) return { aiVerified: false, aiFlagged: false };
+  
+  try {
+    // Perform label detection
+    const [result] = await visionClient.labelDetection(imageUrl);
+    const labels = result.labelAnnotations || [];
+    
+    // Perform text detection (optional, for checking if it has text like a real proof)
+    const [textResult] = await visionClient.textDetection(imageUrl);
+    const texts = textResult.textAnnotations || [];
+    
+    // Check if it's a valid proof (e.g. has labels or text)
+    // A simple heuristic: if it has at least some labels or text, it might be valid.
+    const isBlank = labels.length === 0 && texts.length === 0;
+    
+    // We flag it if it's entirely blank or completely unrecognizable
+    const aiFlagged = isBlank;
+    
+    // We verify it if we found text (e.g. screenshot with code/UI)
+    const aiVerified = texts.length > 0;
+    
+    return { aiVerified, aiFlagged };
+  } catch (error) {
+    console.error('Vision API error:', error.message);
+    return { aiVerified: false, aiFlagged: false };
+  }
+};
+
 const fillTaskSheet = async (internId, parts) => {
   let imageUrl = null;
   const fields = {};
@@ -132,12 +169,17 @@ const fillTaskSheet = async (internId, parts) => {
     throw new ApiError(409, 'You have already submitted a proof for this task');
   }
 
+  // Pre-screen the uploaded image using Google Cloud Vision
+  const { aiVerified, aiFlagged } = await verifyProofImage(imageUrl);
+
   const proof = await prisma.proof.create({
     data: {
       taskId,
       internId,
       imageUrl,
-      completedSubTasks
+      completedSubTasks,
+      aiVerified,
+      aiFlagged
     }
   });
 
