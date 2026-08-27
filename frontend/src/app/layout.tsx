@@ -6,11 +6,14 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport = {
+  themeColor: "#000000",
+};
+
 export const metadata = {
   title: "Intern Management",
   description: "Centralized intern management and workforce tracking system.",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
