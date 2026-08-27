@@ -33,7 +33,8 @@ const login = async (identifier, password, fastifyJwt) => {
         { email: identifier },
         { specialId: identifier }
       ]
-    }
+    },
+    include: { department: true }
   });
   
   if (!user) throw new ApiError(404, 'User not found');
@@ -58,7 +59,7 @@ const login = async (identifier, password, fastifyJwt) => {
   // Store refresh token in Redis with a 7-day expiration
   await redis.set(`refresh_token:${user.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
   
-  const userWithoutPassword = { ...user };
+  const userWithoutPassword = { ...user, department: user.department };
   delete userWithoutPassword.password;
   
   return { accessToken, refreshToken, user: userWithoutPassword };
@@ -84,7 +85,10 @@ const googleLogin = async (idToken, fastifyJwt) => {
   const email = payload.email;
 
   // Find user by email
-  let user = await prisma.user.findUnique({ where: { email } });
+  let user = await prisma.user.findUnique({ 
+    where: { email },
+    include: { department: true }
+  });
 
   // Map to existing or return error if not allowed to auto-register
   if (!user) {
@@ -100,7 +104,7 @@ const googleLogin = async (idToken, fastifyJwt) => {
   const { accessToken, refreshToken } = generateTokens(user, fastifyJwt);
   await redis.set(`refresh_token:${user.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
 
-  const userWithoutPassword = { ...user };
+  const userWithoutPassword = { ...user, department: user.department };
   delete userWithoutPassword.password;
 
   return { accessToken, refreshToken, user: userWithoutPassword };
@@ -152,7 +156,10 @@ const refresh = async (currentRefreshToken, fastifyJwt) => {
       throw new ApiError(401, 'Invalid or expired refresh token in session');
     }
 
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    const user = await prisma.user.findUnique({ 
+      where: { id: decoded.id },
+      include: { department: true }
+    });
     
     if (!user || !user.isActive) {
       throw new ApiError(401, 'Invalid refresh token');
@@ -165,7 +172,10 @@ const refresh = async (currentRefreshToken, fastifyJwt) => {
     await redis.del(`refresh_token:${decoded.id}:${currentRefreshToken}`);
     await redis.set(`refresh_token:${decoded.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
 
-    return { accessToken, refreshToken };
+    const userWithoutPassword = { ...user, department: user.department };
+    delete userWithoutPassword.password;
+
+    return { accessToken, refreshToken, user: userWithoutPassword };
   } catch (err) {
     throw new ApiError(401, 'Invalid or expired refresh token');
   }

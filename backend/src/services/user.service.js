@@ -10,7 +10,8 @@ const getDashboardData = async (userId) => {
       subordinates: true,
       attendances: true,
       proofs: true,
-      ratingsGot: true
+      ratingsGot: true,
+      department: true
     }
   });
   
@@ -60,7 +61,9 @@ const getDashboardData = async (userId) => {
     };
   }
 
-  return { user, pendingProofs, activeTasks, adminStats };
+  const mappedUser = { ...user, department: user.department };
+
+  return { user: mappedUser, pendingProofs, activeTasks, adminStats };
 };
 
 const createUser = async (userData, managerId) => {
@@ -114,8 +117,8 @@ const getAllUsers = async (currentUserId, page = 1, limit = 50) => {
 
   let whereClause = {};
 
-  if (currentUserRecord && currentUserRecord.role !== 'ADMIN' && currentUserRecord.department) {
-    whereClause.department = currentUserRecord.department;
+  if (currentUserRecord && currentUserRecord.role !== 'ADMIN' && currentUserRecord.departmentId) {
+    whereClause.departmentId = currentUserRecord.departmentId;
   }
 
   const users = await prisma.user.findMany({
@@ -145,7 +148,12 @@ const getAllUsers = async (currentUserId, page = 1, limit = 50) => {
     }
   });
   
-  return users;
+  const mappedUsers = users.map(u => ({
+    ...u,
+    department: u.department?.name || null
+  }));
+  
+  return mappedUsers;
 };
 
 const promoteUser = async (targetUserId, newRole, requesterRole) => {
@@ -192,7 +200,11 @@ const getLeaderboard = async () => {
       points: true
     }
   });
-  return topUsers;
+  const mappedTopUsers = topUsers.map(u => ({
+    ...u,
+    department: u.department?.name || null
+  }));
+  return mappedTopUsers;
 };
 
 const toggleUserStatus = async (userId) => {
@@ -279,8 +291,9 @@ const getUserById = async (userId) => {
     avgRating = (totalRating / user.ratingsGot.length).toFixed(1);
   }
 
-  return {
+  const userToReturn = {
     ...user,
+    department: user.department,
     stats: {
       taskCompletions: approvedTasks,
       totalTasks,
@@ -288,6 +301,7 @@ const getUserById = async (userId) => {
       avgRating
     }
   };
+  return userToReturn;
 };
 
 const updateUser = async (targetUserId, data, requester) => {
@@ -308,10 +322,10 @@ const updateUser = async (targetUserId, data, requester) => {
   const user = await prisma.user.update({
     where: { id: targetUserId },
     data: updateData,
-    select: { id: true, name: true, email: true, role: true, department: true, specialId: true, phoneNo: true, managerId: true }
+    select: { id: true, name: true, email: true, role: true, department: { select: { name: true } }, specialId: true, phoneNo: true, managerId: true }
   });
 
-  return user;
+  return { ...user, department: user.department };
 };
 
 const updateProfile = async (userId, data, requester) => {
@@ -328,10 +342,10 @@ const updateProfile = async (userId, data, requester) => {
   const user = await prisma.user.update({
     where: { id: userId },
     data: updateData,
-    select: { id: true, name: true, email: true, role: true, department: true, specialId: true, phoneNo: true }
+    select: { id: true, name: true, email: true, role: true, department: { select: { name: true } }, specialId: true, phoneNo: true }
   });
 
-  return user;
+  return { ...user, department: user.department };
 };
 
 const bulkUpdateDepartment = async (userIds, newDepartment, requesterId) => {

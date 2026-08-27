@@ -58,10 +58,14 @@ const getDocuments = async (page = 1, limit = 50) => {
   const documents = await prisma.document.findMany({
     skip: skip,
     take: limit,
-    include: { uploader: { select: { id: true, name: true, department: true } } },
+    include: { uploader: { select: { id: true, name: true, department: { select: { name: true } } } } },
     orderBy: { createdAt: 'desc' }
   });
-  return documents;
+  const mappedDocuments = documents.map(doc => ({
+    ...doc,
+    uploader: doc.uploader ? { ...doc.uploader, department: doc.uploader.department } : null
+  }));
+  return mappedDocuments;
 };
 
 const deleteDocument = async (documentId, user) => {

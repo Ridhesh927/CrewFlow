@@ -37,6 +37,11 @@ export const executeApiRequest = async (endpoint: string, options: RequestInit &
   });
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('auth-storage'); // Also clear zustand storage if applicable
+      window.location.href = '/login';
+    }
     const error = await response.json().catch(() => ({}));
     throw new Error(error.error || error.message || 'API request failed');
   }

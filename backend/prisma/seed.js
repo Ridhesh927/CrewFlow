@@ -60,8 +60,10 @@ async function main() {
   await prisma.attendance.deleteMany()
   await prisma.leaveRequest.deleteMany()
   await prisma.announcement.deleteMany()
+  await prisma.feedback.deleteMany()
   await prisma.document.deleteMany()
   await prisma.user.deleteMany()
+  await prisma.department.deleteMany()
 
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin@123'
   const seniorTlPassword = process.env.SENIORTL_PASSWORD || 'admin@123'
@@ -70,6 +72,23 @@ async function main() {
   const adminHashed = await argon2.hash(adminPassword)
   const seniorTlHashed = await argon2.hash(seniorTlPassword)
   const hashedPassword = await argon2.hash(seedPassword)
+
+
+  console.log('🏢 Creating Departments...');
+  const allDepts = new Set([
+    'Global Executive', 'Operations', 'Executive Board', 'Human Resources', 'Technology',
+    'Software Development', 'Cyber & DevOps', 'AI & Data Science', 'Growth & Business', 'Design & Mobile',
+    ...DOMAINS
+  ]);
+  const deptMap = {};
+  let dCode = 1;
+  for (const deptName of allDepts) {
+    const dept = await prisma.department.create({
+      data: { name: deptName, code: 'DPT-' + String(dCode++).padStart(3, '0') }
+    });
+    deptMap[deptName] = dept.id;
+  }
+
 
   // 1. Create 5 Admins
   console.log('👤 Creating 5 Admin users...')
@@ -89,7 +108,7 @@ async function main() {
         email: adminData[i].email,
         password: adminData[i].password,
         role: 'ADMIN',
-        department: adminData[i].department,
+        departmentId: deptMap[adminData[i].department],
         specialId: `EMP-ADM-${String(i + 1).padStart(3, '0')}`,
         phoneNo: generatePhone(100 + i),
         points: 1000
@@ -116,7 +135,7 @@ async function main() {
         email: seniorTlConfigs[i].email,
         password: seniorTlConfigs[i].password,
         role: 'SENIOR_TL',
-        department: seniorTlConfigs[i].dept,
+        departmentId: deptMap[seniorTlConfigs[i].dept],
         specialId: `EMP-STL-${String(i + 1).padStart(3, '0')}`,
         phoneNo: generatePhone(200 + i),
         managerId: admins[i % admins.length].id,
@@ -145,7 +164,7 @@ async function main() {
       email: tlEmail,
       password: hashedPassword,
       role: 'TL',
-      department: domain,
+      departmentId: deptMap[domain],
       specialId: `EMP-TL-${String(dIndex + 1).padStart(3, '0')}`,
       phoneNo: generatePhone(300 + dIndex),
       managerId: assignedSeniorTl.id,
@@ -160,7 +179,7 @@ async function main() {
   const capObjects = []
   for (let dIndex = 0; dIndex < DOMAINS.length; dIndex++) {
     const domain = DOMAINS[dIndex]
-    const tl = tls.find(t => t.department === domain)
+    const tl = tls.find(t => t.departmentId === deptMap[domain])
 
     for (let c = 1; c <= 3; c++) {
       const capIndex = dIndex * 3 + c
@@ -174,7 +193,7 @@ async function main() {
         email: capEmail,
         password: hashedPassword,
         role: 'CAPTAIN',
-        department: domain,
+        departmentId: deptMap[domain],
         specialId: `EMP-CAP-${String(capIndex).padStart(3, '0')}`,
         phoneNo: generatePhone(400 + capIndex),
         managerId: tl.id,
@@ -190,7 +209,7 @@ async function main() {
   const internObjects = []
   for (let dIndex = 0; dIndex < DOMAINS.length; dIndex++) {
     const domain = DOMAINS[dIndex]
-    const domainCaptains = captains.filter(c => c.department === domain)
+    const domainCaptains = captains.filter(c => c.departmentId === deptMap[domain])
 
     for (let i = 1; i <= 11; i++) {
       const internIndex = dIndex * 11 + i
@@ -215,7 +234,7 @@ async function main() {
         email: internEmail,
         password: hashedPassword,
         role: 'INTERN',
-        department: domain,
+        departmentId: deptMap[domain],
         specialId: `EMP-INT-${String(internIndex).padStart(3, '0')}`,
         phoneNo: generatePhone(500 + internIndex),
         managerId: assignedCaptain.id,
@@ -374,6 +393,31 @@ async function main() {
       }
     })
   }
+
+  // 11. Documents
+  console.log('📁 Seeding documents...')
+  const docData = [
+    { title: 'Employee Handbook 2026', description: 'Policies and guidelines for all interns and employees.', fileType: 'pdf', uploadedBy: admins[0].id },
+    { title: 'Project Architecture Diagram', description: 'High-level system design for CrewFlow backend.', fileType: 'image', uploadedBy: seniorTls[0].id },
+    { title: 'Sprint Planning Template', description: 'Standard template for organizing bi-weekly sprints.', fileType: 'excel', uploadedBy: admins[0].id }
+  ]
+  const docsToCreate = docData.map(doc => ({
+    title: doc.title,
+    description: doc.description,
+    fileUrl: 'https://example.com/sample-file.pdf', // Dummy URL
+    fileType: doc.fileType,
+    uploadedBy: doc.uploadedBy
+  }))
+  await prisma.document.createMany({ data: docsToCreate })
+
+  // 12. Feedbacks & Grievances
+  console.log('💬 Seeding feedbacks...')
+  const feedbackData = [
+    { userId: interns[0].id, type: 'Suggestion', subject: 'More UI/UX Workshops', description: 'It would be great to have more design-focused workshops.', status: 'OPEN' },
+    { userId: interns[1].id, type: 'Grievance', subject: 'Internet Connectivity Issues', description: 'The guest Wi-Fi on the 3rd floor keeps dropping.', status: 'RESOLVED', adminNotes: 'IT team restarted the AP. Issue resolved.' },
+    { userId: captains[0].id, type: 'Other', subject: 'New Coffee Machine', description: 'Can we get a new espresso machine in the break room?', status: 'IN_PROGRESS', adminNotes: 'Looking into budget approvals.' }
+  ]
+  await prisma.feedback.createMany({ data: feedbackData })
 
   console.log('🎉 Ultra-fast bulk seeding completed successfully!')
 }

@@ -24,7 +24,7 @@ const getFeedback = async (request, reply) => {
     let feedback;
     if (user.role === 'ADMIN') {
       feedback = await prisma.feedback.findMany({
-        include: { user: { select: { id: true, name: true, email: true, department: true } } },
+        include: { user: { select: { id: true, name: true, email: true, department: { select: { name: true } } } } },
         orderBy: { createdAt: 'desc' }
       });
     } else {
@@ -32,6 +32,12 @@ const getFeedback = async (request, reply) => {
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' }
       });
+    }
+    if (user.role === 'ADMIN') {
+      feedback = feedback.map(f => ({
+        ...f,
+        user: f.user ? { ...f.user, department: f.user.department } : null
+      }));
     }
     return { success: true, feedback };
   } catch (error) {
