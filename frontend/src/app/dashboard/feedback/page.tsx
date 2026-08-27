@@ -70,10 +70,8 @@ export default function FeedbackPage() {
 
         {user?.role !== "ADMIN" && (
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <MessageSquarePlus className="mr-2 h-4 w-4" /> Submit Feedback
-              </Button>
+            <DialogTrigger render={<Button />}>
+              <MessageSquarePlus className="mr-2 h-4 w-4" /> Submit Feedback
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
