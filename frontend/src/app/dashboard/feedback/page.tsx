@@ -80,8 +80,8 @@ export default function FeedbackPage() {
               <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <Select value={formData.type} onValueChange={(val) => setFormData({ ...formData, type: val })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select value={formData.type} onValueChange={(val) => setFormData({ ...formData, type: val || "" })}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Suggestion">Suggestion</SelectItem>
                       <SelectItem value="Grievance">Grievance</SelectItem>
@@ -174,7 +174,7 @@ export default function FeedbackPage() {
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={adminStatus} onValueChange={setAdminStatus}>
+                <Select value={adminStatus} onValueChange={(val) => setAdminStatus(val || "")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="OPEN">Open</SelectItem>
