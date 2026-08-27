@@ -1,7 +1,3 @@
-const request = require('supertest');
-const fastify = require('../src/app');
-const { PrismaClient } = require('@prisma/client');
-
 jest.mock('@prisma/client', () => {
   const mPrisma = {
     attendance: {
@@ -11,11 +7,18 @@ jest.mock('@prisma/client', () => {
     user: {
       findUnique: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
     $connect: jest.fn(),
     $disconnect: jest.fn(),
   };
   return { PrismaClient: jest.fn(() => mPrisma) };
 });
+
+const request = require('supertest');
+const fastify = require('../src/app');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 

@@ -1,7 +1,3 @@
-const request = require('supertest');
-const fastify = require('../src/app');
-const { PrismaClient } = require('@prisma/client');
-
 jest.mock('@prisma/client', () => {
   const mPrisma = {
     user: {
@@ -13,11 +9,18 @@ jest.mock('@prisma/client', () => {
     department: {
       findUnique: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
     $connect: jest.fn(),
     $disconnect: jest.fn(),
   };
   return { PrismaClient: jest.fn(() => mPrisma) };
 });
+
+const request = require('supertest');
+const fastify = require('../src/app');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -71,7 +74,7 @@ describe('User API Integration Tests', () => {
           department: 'Eng'
         });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 

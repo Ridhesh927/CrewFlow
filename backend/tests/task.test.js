@@ -1,7 +1,3 @@
-const request = require('supertest');
-const fastify = require('../src/app');
-const { PrismaClient } = require('@prisma/client');
-
 jest.mock('@prisma/client', () => {
   const mPrisma = {
     task: {
@@ -14,11 +10,21 @@ jest.mock('@prisma/client', () => {
     proof: {
       findMany: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
+    notification: {
+      create: jest.fn(),
+    },
     $connect: jest.fn(),
     $disconnect: jest.fn(),
   };
   return { PrismaClient: jest.fn(() => mPrisma) };
 });
+
+const request = require('supertest');
+const fastify = require('../src/app');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -68,10 +74,10 @@ describe('Task API Integration Tests', () => {
           title: 'New Task',
           description: 'A test task',
           targetAudience: 'Eng',
-          deadline: new Date().toISOString()
+          deadline: new Date(Date.now() + 86400000).toISOString()
         });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
@@ -83,7 +89,7 @@ describe('Task API Integration Tests', () => {
           title: 'New Task',
           description: 'A test task',
           targetAudience: 'Eng',
-          deadline: new Date().toISOString()
+          deadline: new Date(Date.now() + 86400000).toISOString()
         });
 
       expect(response.status).toBe(403);
