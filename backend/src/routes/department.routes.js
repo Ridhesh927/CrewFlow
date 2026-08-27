@@ -1,11 +1,16 @@
 const departmentController = require('../controllers/department.controller');
 const { requireRole } = require('../plugins/auth.middleware');
+const validate = require('../plugins/validate.middleware');
+const { createDepartmentSchema, updateDepartmentSchema } = require('../schemas/department.schema');
 
 async function departmentRoutes(fastify, options) {
   // Only ADMIN can create/update/delete departments
   fastify.post(
     '/',
-    { preValidation: [fastify.authenticate, requireRole(['ADMIN'])] },
+    { 
+      preValidation: [fastify.authenticate, requireRole(['ADMIN'])],
+      preHandler: [validate(createDepartmentSchema)]
+    },
     departmentController.createDepartment
   );
 
@@ -24,7 +29,10 @@ async function departmentRoutes(fastify, options) {
 
   fastify.put(
     '/:id',
-    { preValidation: [fastify.authenticate, requireRole(['ADMIN'])] },
+    { 
+      preValidation: [fastify.authenticate, requireRole(['ADMIN'])],
+      preHandler: [validate(updateDepartmentSchema)]
+    },
     departmentController.updateDepartment
   );
 
