@@ -28,7 +28,7 @@ export default function LeaderboardPage() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, x: -20 },
     show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300 } }
   };
