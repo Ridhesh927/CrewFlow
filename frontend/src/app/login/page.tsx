@@ -117,15 +117,21 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex justify-center w-full">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => {
-                  console.log('Login Failed');
-                }}
-                useOneTap
-              />
-            </div>
+            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID !== "dummy-client-id.apps.googleusercontent.com" ? (
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => {
+                    console.log('Login Failed');
+                  }}
+                  useOneTap
+                />
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                Google Login is disabled (Missing Client ID in environment variables).
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
