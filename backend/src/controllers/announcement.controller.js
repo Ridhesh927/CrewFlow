@@ -21,8 +21,10 @@ async function getAnnouncements(request, reply) {
 }
 
 async function getAllAnnouncements(request, reply) {
+  const page = parseInt(request.query.page, 10) || 1;
+  const limit = parseInt(request.query.limit, 10) || 50;
   try {
-    const announcements = await announcementService.getAllAnnouncements();
+    const announcements = await announcementService.getAllAnnouncements(page, limit);
     reply.send({ announcements });
   } catch (error) {
     request.log.error(error);

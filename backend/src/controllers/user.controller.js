@@ -42,9 +42,11 @@ const createUser = async (request, reply) => {
 
 const getAllUsers = async (request, reply) => {
   const currentUserId = request.user.id;
+  const page = parseInt(request.query.page, 10) || 1;
+  const limit = parseInt(request.query.limit, 10) || 50;
   
   try {
-    const users = await userService.getAllUsers(currentUserId);
+    const users = await userService.getAllUsers(currentUserId, page, limit);
     return { success: true, users };
   } catch (error) {
     if (error.statusCode) {
