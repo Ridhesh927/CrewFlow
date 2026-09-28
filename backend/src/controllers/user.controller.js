@@ -131,7 +131,10 @@ const deleteUser = async (request, reply) => {
 }
 
 const getUserById = async (request, reply) => {
-  const userId = parseInt(request.params.id);
+  const userId = parseInt(request.params.id, 10);
+  if (isNaN(userId)) {
+    return reply.code(400).send({ error: 'Invalid user ID format. Must be an integer.' });
+  }
   try {
     const user = await userService.getUserById(userId);
     return { success: true, user };
@@ -142,7 +145,10 @@ const getUserById = async (request, reply) => {
 }
 
 const updateUser = async (request, reply) => {
-  const targetUserId = parseInt(request.params.id);
+  const targetUserId = parseInt(request.params.id, 10);
+  if (isNaN(targetUserId)) {
+    return reply.code(400).send({ error: 'Invalid user ID format. Must be an integer.' });
+  }
   const requester = request.user;
   try {
     const user = await userService.updateUser(targetUserId, request.body, requester);
@@ -154,7 +160,10 @@ const updateUser = async (request, reply) => {
 }
 
 const updateProfile = async (request, reply) => {
-  const userId = parseInt(request.params.id);
+  const userId = parseInt(request.params.id, 10);
+  if (isNaN(userId)) {
+    return reply.code(400).send({ error: 'Invalid user ID format. Must be an integer.' });
+  }
   const requester = request.user;
   try {
     const user = await userService.updateProfile(userId, request.body, requester);

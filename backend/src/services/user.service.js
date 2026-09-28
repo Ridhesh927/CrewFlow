@@ -317,7 +317,7 @@ const updateUser = async (targetUserId, data, requester) => {
   if (department) updateData.department = department;
   if (phoneNo) updateData.phoneNo = phoneNo;
   if (specialId) updateData.specialId = specialId;
-  if (managerId) updateData.managerId = parseInt(managerId);
+  if (managerId) updateData.managerId = managerId;
 
   const user = await prisma.user.update({
     where: { id: targetUserId },
