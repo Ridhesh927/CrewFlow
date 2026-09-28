@@ -42,16 +42,26 @@ const cleanupProofs = async () => {
         continue;
       }
 
+      let isDeleted = false;
       try {
-        await cloudinary.uploader.destroy(publicId);
-        
-        await prisma.proof.update({
-          where: { id: proof.id },
-          data: { imageUrl: null }
-        });
-        cleanedCount++;
-      } catch (err) {
-        console.error(`[Cron Job] Failed to clean up proof ID ${proof.id}:`, err);
+        const cloudinaryResponse = await cloudinary.uploader.destroy(publicId);
+        if (cloudinaryResponse.result === 'ok' || cloudinaryResponse.result === 'not found') {
+            isDeleted = true;
+        }
+      } catch (cloudErr) {
+        console.error(`[Cron Job] Cloudinary API error for ${publicId}:`, cloudErr);
+      }
+
+      if (isDeleted) {
+        try {
+          await prisma.proof.update({
+            where: { id: proof.id },
+            data: { imageUrl: null }
+          });
+          cleanedCount++;
+        } catch (dbErr) {
+          console.error(`[Cron Job] Database update failed for proof ID ${proof.id}:`, dbErr);
+        }
       }
     }
 
