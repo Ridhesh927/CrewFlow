@@ -33,7 +33,12 @@ fastify.register(cors, {
   allowedHeaders: ['Content-Type', 'Authorization']
 })
 
-fastify.register(require('@fastify/multipart'), { attachFieldsToBody: false })
+fastify.register(require('@fastify/multipart'), { 
+  attachFieldsToBody: false,
+  limits: {
+    fileSize: 10485760 // 10MB limit specifically for files
+  } 
+})
 if (!process.env.COOKIE_SECRET) {
   throw new Error('FATAL: COOKIE_SECRET environment variable is not defined.');
 }
