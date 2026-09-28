@@ -409,25 +409,38 @@ const bulkUploadUsers = async (fileStream, managerId) => {
     });
 
     parser.on('end', async function() {
-      for (const row of results) {
-        try {
-          if (!row.email || !row.password || !row.name) {
-            errors.push({ email: row.email, error: 'Missing required fields: email, password, name' });
-            continue;
+      const BATCH_SIZE = 50; 
+      
+      for (let i = 0; i < results.length; i += BATCH_SIZE) {
+        const batch = results.slice(i, i + BATCH_SIZE);
+        
+        await Promise.all(batch.map(async (row) => {
+          try {
+            if (!row.email || !row.password || !row.name) {
+              errors.push({ email: row.email, error: 'Missing required fields: email, password, name' });
+              return;
+            }
+            
+            const hashedPassword = await argon2.hash(row.password);
+            
+            await prisma.user.create({
+              data: {
+                email: row.email.trim(),
+                password: hashedPassword,
+                name: row.name,
+                role: row.role || 'INTERN',
+                department: row.department,
+                specialId: row.specialId,
+                phoneNo: row.phoneNo,
+                managerId: managerId
+              }
+            });
+            count++;
+          } catch (err) {
+            const errorMsg = err.code === 'P2002' ? 'Email or Special ID already exists' : err.message;
+            errors.push({ email: row.email, error: errorMsg });
           }
-          await createUser({
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role || 'INTERN',
-            department: row.department,
-            specialId: row.specialId,
-            phoneNo: row.phoneNo
-          }, managerId);
-          count++;
-        } catch (err) {
-          errors.push({ email: row.email, error: err.message });
-        }
+        }));
       }
       resolve({ count, errors });
     });
