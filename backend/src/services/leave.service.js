@@ -73,36 +73,56 @@ const approveLeaveRequest = async (leaveId, approver) => {
     const end = new Date(updatedLeaveRequest.endDate);
     end.setUTCHours(0, 0, 0, 0);
 
+    // 1. Pre-fetch all existing attendances for this date range in one query
+    const existingAttendances = await tx.attendance.findMany({
+      where: {
+        userId: updatedLeaveRequest.userId,
+        date: { gte: start, lte: end }
+      }
+    });
+
+    // 2. Create a fast lookup map using the date's timestamp
+    const attendanceMap = new Map(
+      existingAttendances.map(a => [a.date.getTime(), a.id])
+    );
+
+    const attendancesToCreate = [];
+    const attendancesToUpdate = [];
+
     let current = new Date(start);
     while (current <= end) {
-      const existingAttendance = await tx.attendance.findFirst({
-        where: {
-          userId: updatedLeaveRequest.userId,
-          date: new Date(current)
-        }
-      });
-
-      if (!existingAttendance) {
-        await tx.attendance.create({
-          data: {
-            userId: updatedLeaveRequest.userId,
-            date: new Date(current),
-            status: 'Leave',
-            markedBy: approverId,
-            remarks: 'Approved leave request'
-          }
-        });
+      const currentTimestamp = current.getTime();
+      
+      if (attendanceMap.has(currentTimestamp)) {
+        // Prepare for update
+        attendancesToUpdate.push(attendanceMap.get(currentTimestamp));
       } else {
-        await tx.attendance.update({
-          where: { id: existingAttendance.id },
-          data: {
-            status: 'Leave',
-            markedBy: approverId,
-            remarks: 'Updated due to approved leave request'
-          }
+        // Prepare for creation
+        attendancesToCreate.push({
+          userId: updatedLeaveRequest.userId,
+          date: new Date(current),
+          status: 'Leave',
+          markedBy: approverId,
+          remarks: 'Approved leave request'
         });
       }
       current.setDate(current.getDate() + 1);
+    }
+
+    // 3. Execute bulk writes (only 2 queries instead of 28!)
+    if (attendancesToCreate.length > 0) {
+      await tx.attendance.createMany({ data: attendancesToCreate });
+    }
+    
+    if (attendancesToUpdate.length > 0) {
+      await tx.attendance.updateMany({
+        where: { id: { in: attendancesToUpdate } },
+        data: {
+          status: 'Leave',
+          markedBy: approverId,
+          remarks: 'Updated due to approved leave request'
+        }
+      });
     }
 
     return updatedLeaveRequest;
