@@ -1,11 +1,30 @@
+const jwt = require('jsonwebtoken');
+
 module.exports = (io) => {
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error('Authentication error: Token missing'));
+    }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = decoded; // Attach user info to the socket
+      next();
+    } catch (err) {
+      next(new Error('Authentication error: Invalid token'));
+    }
+  });
+
   io.on('connection', (socket) => {
     // console.log(`New client connected: ${socket.id}`);
 
     // User joins their department or role room
     socket.on('join_room', (room) => {
-      socket.join(room);
-      // console.log(`Socket ${socket.id} joined room ${room}`);
+      if (room === socket.user.department || socket.user.role === 'ADMIN') {
+         socket.join(room);
+      } else {
+         socket.emit('error', 'Unauthorized to join this room');
+      }
     });
 
     // Handle incoming chat messages
