@@ -110,7 +110,9 @@ export default function OrgChartPage() {
         layoutTree(root.id, idx * 300, 50, levelOffsets);
       });
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNodes(newNodes);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEdges(newEdges);
     }
   }, [users]);
