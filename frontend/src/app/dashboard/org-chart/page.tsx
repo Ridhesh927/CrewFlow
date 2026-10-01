@@ -91,7 +91,7 @@ export default function OrgChartPage() {
 
         const children = childrenMap.get(userId) || [];
         
-        children.forEach((child, index) => {
+        children.forEach((child: any, index: number) => {
           newEdges.push({
             id: `e${userId}-${child.id}`,
             source: userId.toString(),

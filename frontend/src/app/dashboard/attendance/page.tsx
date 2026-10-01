@@ -51,10 +51,10 @@ export default function AttendancePage() {
   const attendances = useMemo(() => data?.attendances || [], [data?.attendances]);
 
   // Extract unique filter options
-  const departments = ["ALL", ...new Set(attendances.map(a => a.user?.department).filter(Boolean))] as string[];
-  const roles = ["ALL", ...new Set(attendances.map(a => a.user?.role).filter(Boolean))] as string[];
+  const departments = ["ALL", ...new Set(attendances.map((a: any) => a.user?.department).filter(Boolean))] as string[];
+  const roles = ["ALL", ...new Set(attendances.map((a: any) => a.user?.role).filter(Boolean))] as string[];
   
-  const getCellColor = (status) => {
+  const getCellColor = (status: string) => {
     switch(status?.toUpperCase()) {
       case 'PRESENT': return "bg-[#1E8E3E] text-white"; // Dark green
       case 'ABSENT':
@@ -72,7 +72,7 @@ export default function AttendancePage() {
     if (!attendances.length) return { uniqueDates: [], userRows: [] };
 
     // Apply basic user filters before pivoting
-    const filteredAttendances = attendances.filter(a => {
+    const filteredAttendances = attendances.filter((a: any) => {
       const matchesDept = departmentFilter === "ALL" || a.user?.department === departmentFilter;
       const matchesRole = roleFilter === "ALL" || a.user?.role === roleFilter;
       const matchesSearch = 
@@ -83,7 +83,7 @@ export default function AttendancePage() {
 
     // Extract unique dates, sorted chronologically
     const dateSet = new Set<string>();
-    filteredAttendances.forEach(a => {
+    filteredAttendances.forEach((a: any) => {
       if (a.date) {
         dateSet.add(new Date(a.date).toLocaleDateString('en-CA')); // Use YYYY-MM-DD in local timezone
       }
@@ -94,7 +94,7 @@ export default function AttendancePage() {
 
     // Group by user
     const userMap = new Map();
-    filteredAttendances.forEach(a => {
+    filteredAttendances.forEach((a: any) => {
       const u = a.user;
       if (!u) return;
       if (!userMap.has(u.id)) {
@@ -124,18 +124,18 @@ export default function AttendancePage() {
     setCurrentPage(1);
   }, [departmentFilter, roleFilter, searchQuery, startDate, endDate]);
 
-  const formatDateHeader = (isoStr) => {
+  const formatDateHeader = (isoStr: string) => {
     const d = new Date(isoStr);
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-  const handleStatusChange = (userId, dateStr, newStatus) => {
+  const handleStatusChange = (userId: number, dateStr: string, newStatus: string) => {
     markAttendance({ targetUserId: userId, date: dateStr, status: newStatus });
   };
 
   const editableStatuses = ["Present", "Absent", "Leave", "Informed", "Late", "Completed", "Terminated", "Discontinued"];
 
-  const renderCell = (row, dateStr) => {
+  const renderCell = (row: any, dateStr: string) => {
     const record = row.attendanceByDate[dateStr];
     
     let content = (

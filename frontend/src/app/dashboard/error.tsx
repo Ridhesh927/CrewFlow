@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-export default function DashboardErrorBoundary({ error, reset }) {
+export default function DashboardErrorBoundary({ error, reset }: { error: Error & { digest?: string }, reset: () => void }) {
   useEffect(() => {
     // Log the error to an error reporting service (e.g., Sentry)
     console.error('Dashboard Route Error caught:', error);

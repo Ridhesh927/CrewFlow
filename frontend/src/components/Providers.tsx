@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-export default function Providers({ children }) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({

@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleStandardLogin = async (e) => {
+  const handleStandardLogin = async (e: any) => {
     e.preventDefault();
     setIsLoading(true);
     const success = await login(identifier, password);
@@ -31,7 +31,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     if (credentialResponse.credential) {
       setIsLoading(true);
       const success = await googleLogin(credentialResponse.credential);

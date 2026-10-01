@@ -40,14 +40,14 @@ export default function AnalyticsPage() {
 
   // Calculate aggregates
   const totalUsers = analyticsData.length;
-  const averageRating = analyticsData.reduce((acc, curr) => acc + curr.averageRating, 0) / (totalUsers || 1);
-  const totalTasks = analyticsData.reduce((acc, curr) => acc + curr.taskCompletions, 0);
+  const averageRating = analyticsData.reduce((acc: number, curr: any) => acc + curr.averageRating, 0) / (totalUsers || 1);
+  const totalTasks = analyticsData.reduce((acc: number, curr: any) => acc + curr.taskCompletions, 0);
   
   let totalPresent = 0;
   let totalAbsent = 0;
   let totalLate = 0;
   
-  analyticsData.forEach(userStat => {
+  analyticsData.forEach((userStat: any) => {
     totalPresent += userStat.attendanceStats?.Present || 0;
     totalAbsent += userStat.attendanceStats?.Absent || 0;
     totalLate += userStat.attendanceStats?.Late || 0;
@@ -56,15 +56,15 @@ export default function AnalyticsPage() {
   const attendanceRate = totalPresent / ((totalPresent + totalAbsent + totalLate) || 1) * 100;
 
   // Transform data for charts
-  const performanceData = analyticsData.map(a => ({
+  const performanceData = analyticsData.map((a: any) => ({
     name: a.user.name,
     rating: a.averageRating
-  })).sort((a, b) => b.rating - a.rating).slice(0, 10); // Top 10
+  })).sort((a: any, b: any) => b.rating - a.rating).slice(0, 10); // Top 10
 
-  const taskData = analyticsData.map(a => ({
+  const taskData = analyticsData.map((a: any) => ({
     name: a.user.name,
     tasks: a.taskCompletions
-  })).sort((a, b) => b.tasks - a.tasks).slice(0, 10);
+  })).sort((a: any, b: any) => b.tasks - a.tasks).slice(0, 10);
 
   return (
     <div className="space-y-6">

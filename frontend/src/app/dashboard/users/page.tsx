@@ -132,7 +132,7 @@ export default function UsersPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createUser.mutate(formData, {
       onSuccess: () => {
@@ -147,7 +147,7 @@ export default function UsersPage() {
   const departments = ["ALL", ...Array.from(new Set(users.map((u: any) => u.department).filter(Boolean)))] as string[];
   const roles = ["ALL", ...Array.from(new Set(users.map((u: any) => u.role).filter(Boolean)))] as string[];
   
-  let filteredUsers = users.filter(u => {
+  let filteredUsers = users.filter((u: any) => {
     const matchesDept = departmentFilter === "ALL" || u.department === departmentFilter;
     const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
     const matchesStatus = statusFilter === "ALL" || 
@@ -160,9 +160,9 @@ export default function UsersPage() {
   });
 
   if (pointsSort === "HIGH_TO_LOW") {
-    filteredUsers.sort((a, b) => (b.points || 0) - (a.points || 0));
+    filteredUsers.sort((a: any, b: any) => (b.points || 0) - (a.points || 0));
   } else if (pointsSort === "LOW_TO_HIGH") {
-    filteredUsers.sort((a, b) => (a.points || 0) - (b.points || 0));
+    filteredUsers.sort((a: any, b: any) => (a.points || 0) - (b.points || 0));
   }
 
   const totalPages = Math.ceil(filteredUsers.length / pageSize);

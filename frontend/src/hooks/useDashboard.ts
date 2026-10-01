@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { executeApiRequest } from '../services/api';
 
-export const useDashboard = (userId) => {
+export const useDashboard = (userId: any) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(!!userId);
   const [error, setError] = useState(null);
