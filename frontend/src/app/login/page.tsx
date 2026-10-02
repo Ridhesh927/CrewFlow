@@ -14,7 +14,11 @@ import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, googleLogin } = useAuthStore();
+  const { login, googleLogin } = useAuthStore((state) => ({
+    login: state.login,
+    googleLogin: state.googleLogin,
+  }));
+  const authError = useAuthStore((state) => state.error);
   const [isLoading, setIsLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -109,9 +113,9 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
-              {useAuthStore.getState().error && (
+              {authError && (
                 <p className="text-sm text-destructive text-center mt-2">
-                  {useAuthStore.getState().error}
+                  {authError}
                 </p>
               )}
             </form>
