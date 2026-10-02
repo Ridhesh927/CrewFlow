@@ -38,6 +38,13 @@ function ResetPasswordForm() {
       return;
     }
 
+    const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!passwordPolicy.test(password)) {
+      setError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const data = await executeApiRequest('/auth/reset-password', {
         method: 'POST',
