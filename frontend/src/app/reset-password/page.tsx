@@ -12,7 +12,13 @@ import { executeApiRequest } from "@/services/api";
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const [token] = useState(() => searchParams.get("token"));
+
+  useEffect(() => {
+    if (token) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [token]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState("");
