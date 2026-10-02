@@ -22,7 +22,7 @@ export function ChatDrawer() {
     if (!user) return;
 
     // Initialize socket connection
-    socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
+    socket = io(process.env.NEXT_PUBLIC_API_URL as string);
 
     // Join a generic company room, or specific department room
     const room = user.department || "General";

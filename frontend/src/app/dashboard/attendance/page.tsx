@@ -187,7 +187,7 @@ export default function AttendancePage() {
   const handleExportCSV = async () => {
     try {
       const token = localStorage.getItem('jwt_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -234,7 +234,7 @@ export default function RatingsPage() {
   const handleExportCSV = async () => {
     try {
       const token = localStorage.getItem('jwt_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/analytics/export/ratings`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/export/ratings`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

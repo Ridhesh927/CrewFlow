@@ -1,5 +1,5 @@
 // Base configuration for API calls
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const executeApiRequest = async (endpoint: string, options: RequestInit & { body?: any } = {}) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
