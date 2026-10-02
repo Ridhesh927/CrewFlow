@@ -23,10 +23,14 @@ export default function LoginPage() {
   const handleStandardLogin = async (e: any) => {
     e.preventDefault();
     setIsLoading(true);
-    const success = await login(identifier, password);
-    if (success) {
-      router.push("/dashboard");
-    } else {
+    try {
+      const success = await login(identifier, password);
+      if (success) {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -34,10 +38,14 @@ export default function LoginPage() {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     if (credentialResponse.credential) {
       setIsLoading(true);
-      const success = await googleLogin(credentialResponse.credential);
-      if (success) {
-        router.push("/dashboard");
-      } else {
+      try {
+        const success = await googleLogin(credentialResponse.credential);
+        if (success) {
+          router.push("/dashboard");
+        }
+      } catch (error) {
+        console.error("Google Login failed", error);
+      } finally {
         setIsLoading(false);
       }
     }
