@@ -20,12 +20,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     // Only check auth after hydration is complete
-    if (isHydrated && !user) {
-      router.push("/login");
+    if (!isHydrated) return;
+    if (!user) {
+      router.replace("/login");
     }
   }, [user, router, isHydrated]);
 
-  if (!isHydrated || !user) return null; // Or a loading spinner
+  if (!isHydrated) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading dashboard...</div>;
+  if (!user) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Redirecting to login...</div>;
 
   return (
     <div className="min-h-screen bg-muted/20">
