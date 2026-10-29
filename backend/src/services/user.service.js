@@ -171,9 +171,15 @@ const getAllUsers = async (currentUserId, page = 1, limit = 50, scope = null, re
     }
   });
   
+  const activeAdminCount = await prisma.user.count({
+    where: { role: 'ADMIN', isActive: true }
+  });
+
   const mappedUsers = users.map(u => ({
     ...u,
-    department: u.department?.name || null
+    department: u.department?.name || null,
+    isProtected: Boolean(u.role === 'ADMIN' && activeAdminCount <= 1),
+    isLastAdmin: Boolean(u.role === 'ADMIN' && activeAdminCount <= 1)
   }));
   
   return mappedUsers;
@@ -185,6 +191,15 @@ const promoteUser = async (targetUserId, newRole, requesterRole) => {
   });
 
   if (!targetUser) throw new ApiError(404, 'User not found');
+
+  if (targetUser.role === 'ADMIN' && newRole !== 'ADMIN') {
+    const activeAdminCount = await prisma.user.count({
+      where: { role: 'ADMIN', isActive: true }
+    });
+    if (activeAdminCount <= 1) {
+      throw new ApiError(403, 'Cannot demote the last remaining administrator account');
+    }
+  }
 
   if (newRole === 'CAPTAIN') {
     if (!['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'].includes(requesterRole)) {
@@ -231,12 +246,17 @@ const getLeaderboard = async () => {
 };
 
 const toggleUserStatus = async (userId) => {
-  if (userId === 1) {
-    throw new ApiError(403, 'Cannot modify the primary admin account');
-  }
-
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(404, 'User not found');
+
+  if (user.role === 'ADMIN' && user.isActive) {
+    const activeAdminCount = await prisma.user.count({
+      where: { role: 'ADMIN', isActive: true }
+    });
+    if (activeAdminCount <= 1) {
+      throw new ApiError(403, 'Cannot disable the last active administrator account');
+    }
+  }
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
@@ -256,15 +276,20 @@ const toggleUserStatus = async (userId) => {
 const auditService = require('./audit.service');
 
 const deleteUser = async (userId, requester) => {
-  if (userId === 1) {
-    throw new ApiError(403, 'Cannot delete the primary admin account');
-  }
-
   const userToRestore = await prisma.user.findUnique({
     where: { id: userId }
   });
 
   if (!userToRestore) throw new ApiError(404, 'User not found');
+
+  if (userToRestore.role === 'ADMIN') {
+    const activeAdminCount = await prisma.user.count({
+      where: { role: 'ADMIN', isActive: true }
+    });
+    if (activeAdminCount <= 1) {
+      throw new ApiError(403, 'Cannot delete the last remaining administrator account');
+    }
+  }
 
   await prisma.user.delete({
     where: { id: userId }

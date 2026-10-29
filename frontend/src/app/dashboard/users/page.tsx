@@ -448,7 +448,7 @@ export default function UsersPage() {
                   <TableCell>{u.phoneNo || "-"}</TableCell>
                   <TableCell>{u.points}</TableCell>
                   <TableCell>
-                    {u.id !== 1 && currentUser?.role === 'ADMIN' && (
+                    {!u.isProtected && currentUser?.role === 'ADMIN' && (
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" className="h-8 w-8 p-0" />}>
                             <MoreHorizontal className="h-4 w-4" />
