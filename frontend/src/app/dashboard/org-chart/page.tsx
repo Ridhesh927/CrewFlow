@@ -42,27 +42,30 @@ const nodeTypes = {
 };
 
 export default function OrgChartPage() {
-  const { data: users, isLoading } = useGetAllUsers();
+  const { data: usersData, isLoading } = useGetAllUsers();
   const updateUserMutation = useUpdateUser();
   
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  const userList: any[] = useMemo(() => {
+    if (Array.isArray(usersData)) return usersData;
+    if (usersData && Array.isArray((usersData as any).users)) return (usersData as any).users;
+    return [];
+  }, [usersData]);
+
   useEffect(() => {
-    if (users && Array.isArray(users)) {
+    if (userList.length > 0) {
       // Build a basic tree layout algorithm
       // Find root (usually ADMIN without manager)
-      const roots = users.filter(u => !u.manager);
+      const roots = userList.filter((u: any) => !u.manager);
       
       const newNodes: Node[] = [];
       const newEdges: Edge[] = [];
-      
-      let xOffset = 0;
-      let yOffset = 0;
 
       // Group users by managerId
       const childrenMap = new Map();
-      users.forEach(u => {
+      userList.forEach((u: any) => {
         if (u.manager && u.manager.id) {
           if (!childrenMap.has(u.manager.id)) {
             childrenMap.set(u.manager.id, []);
@@ -71,9 +74,13 @@ export default function OrgChartPage() {
         }
       });
 
-      // Simple recursive layout
+      // Simple recursive layout with cycle detection
+      const visitedNodes = new Set<number>();
       const layoutTree = (userId: number, x: number, y: number, levelXOffsets: Map<number, number>) => {
-        const user = users.find(u => u.id === userId);
+        if (visitedNodes.has(userId)) return;
+        visitedNodes.add(userId);
+
+        const user = userList.find((u: any) => u.id === userId);
         if (!user) return;
 
         // Get the current max X offset for this level, or default to x
@@ -106,7 +113,7 @@ export default function OrgChartPage() {
 
       const levelOffsets = new Map<number, number>();
       
-      roots.forEach((root, idx) => {
+      roots.forEach((root: any, idx: number) => {
         layoutTree(root.id, idx * 300, 50, levelOffsets);
       });
 
@@ -115,7 +122,7 @@ export default function OrgChartPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEdges(newEdges);
     }
-  }, [users]);
+  }, [userList]);
 
   const onNodesChange = useCallback(
     (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -133,6 +140,35 @@ export default function OrgChartPage() {
       const targetUserId = parseInt(params.target);
       const sourceUserId = parseInt(params.source);
       
+      // Reject self-assignment
+      if (sourceUserId === targetUserId) {
+        toast.error("A user cannot report to themselves");
+        return;
+      }
+
+      // Cycle detection: proposed manager (sourceUserId) cannot be a descendant of targetUserId
+      const isDescendant = (ancestorId: number, childId: number): boolean => {
+        const queue = [ancestorId];
+        const visited = new Set<number>([ancestorId]);
+        while (queue.length > 0) {
+          const curr = queue.shift()!;
+          const directSubs = userList.filter((u: any) => u.manager?.id === curr);
+          for (const sub of directSubs) {
+            if (sub.id === childId) return true;
+            if (!visited.has(sub.id)) {
+              visited.add(sub.id);
+              queue.push(sub.id);
+            }
+          }
+        }
+        return false;
+      };
+
+      if (isDescendant(targetUserId, sourceUserId)) {
+        toast.error("Cannot assign a subordinate as manager (circular hierarchy)");
+        return;
+      }
+
       // Update DB
       toast.promise(
         updateUserMutation.mutateAsync({
@@ -142,14 +178,11 @@ export default function OrgChartPage() {
         {
           loading: 'Reassigning user...',
           success: 'User successfully reassigned!',
-          error: 'Failed to reassign user'
+          error: (err: any) => err?.message || 'Failed to reassign user'
         }
       );
-      
-      // We don't manually add the edge because the DB update will invalidate 
-      // the useGetAllUsers query and trigger a redraw.
     },
-    [updateUserMutation]
+    [updateUserMutation, userList]
   );
 
   if (isLoading) {

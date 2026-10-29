@@ -365,7 +365,30 @@ const updateUser = async (targetUserId, data, requester) => {
   if (department) updateData.department = department;
   if (phoneNo) updateData.phoneNo = phoneNo;
   if (specialId) updateData.specialId = specialId;
-  if (managerId) updateData.managerId = managerId;
+
+  if (managerId !== undefined) {
+    if (managerId === null) {
+      updateData.managerId = null;
+    } else {
+      const parsedManagerId = parseInt(managerId, 10);
+      if (isNaN(parsedManagerId)) {
+        throw new ApiError(400, 'Invalid managerId format');
+      }
+      if (parsedManagerId === targetUserId) {
+        throw new ApiError(400, 'Cannot set user as their own manager');
+      }
+      const proposedManager = await prisma.user.findUnique({ where: { id: parsedManagerId } });
+      if (!proposedManager) {
+        throw new ApiError(404, 'Proposed manager does not exist');
+      }
+      // Check for cycles: proposed manager cannot be a descendant of targetUserId
+      const isDescendant = await checkUserHierarchy(targetUserId, parsedManagerId);
+      if (isDescendant) {
+        throw new ApiError(400, 'Invalid hierarchy: proposed manager is already a subordinate of this user');
+      }
+      updateData.managerId = parsedManagerId;
+    }
+  }
 
   const user = await prisma.user.update({
     where: { id: targetUserId },
