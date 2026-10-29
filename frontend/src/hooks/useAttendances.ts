@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { executeApiRequest } from '../services/api';
 
 export const useGetAttendances = (startDate?: string, endDate?: string) => {
+  const isValidRange = !startDate || !endDate || startDate <= endDate;
   return useQuery({
     queryKey: ['attendances', startDate, endDate],
     queryFn: () => {
@@ -12,6 +13,7 @@ export const useGetAttendances = (startDate?: string, endDate?: string) => {
       if (params.toString()) url += `?${params.toString()}`;
       return executeApiRequest(url);
     },
+    enabled: isValidRange,
   });
 };
 

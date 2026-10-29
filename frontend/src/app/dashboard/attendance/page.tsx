@@ -33,10 +33,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const toLocalDateInput = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 export default function AttendancePage() {
   useDocumentTitle("Attendance");
-  const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(() =>
+    toLocalDateInput(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  );
+  const [endDate, setEndDate] = useState(() =>
+    toLocalDateInput(new Date())
+  );
+
+  const isInvalidDateRange = Boolean(startDate && endDate && startDate > endDate);
 
   const { data, isLoading } = useGetAttendances(startDate, endDate);
   const { mutate: markAttendance, isPending: isMarking } = useMarkAttendance();
@@ -187,6 +200,10 @@ export default function AttendancePage() {
   };
 
   const handleExportCSV = async () => {
+    if (isInvalidDateRange) {
+      toast.error('Start date must be before or equal to end date.');
+      return;
+    }
     try {
       await executeFileDownload(
         `/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`,
@@ -213,20 +230,44 @@ export default function AttendancePage() {
         
         <div className="flex flex-wrap items-center gap-3">
           {canEdit && (
-            <Button variant="outline" onClick={handleExportCSV} className="mr-2 hidden sm:flex">
+            <Button
+              variant="outline"
+              onClick={handleExportCSV}
+              disabled={isInvalidDateRange}
+              className="mr-2 hidden sm:flex"
+            >
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </Button>
           )}
-          <div className="flex items-center gap-2 mr-4">
-            <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
-              <span className="text-muted-foreground mr-2">From:</span>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent outline-none" />
+          <div className="flex flex-col mr-4">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
+                <span className="text-muted-foreground mr-2">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  max={endDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent outline-none"
+                />
+              </div>
+              <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
+                <span className="text-muted-foreground mr-2">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent outline-none"
+                />
+              </div>
             </div>
-            <div className="flex items-center text-sm border rounded-md px-2 py-1 bg-card">
-              <span className="text-muted-foreground mr-2">To:</span>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent outline-none" />
-            </div>
+            {isInvalidDateRange && (
+              <span className="text-[11px] text-destructive mt-1 font-medium">
+                Start date cannot be after end date.
+              </span>
+            )}
           </div>
           
           {isMarking && (

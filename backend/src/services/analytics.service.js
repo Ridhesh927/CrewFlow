@@ -161,6 +161,9 @@ const exportAttendanceCsv = async (requester, startDate, endDate) => {
   }
 
   if (startDate && endDate) {
+    if (new Date(startDate) > new Date(endDate)) {
+      throw new ApiError(400, 'startDate cannot be after endDate');
+    }
     whereClause.date = {
       gte: new Date(startDate),
       lte: new Date(endDate)

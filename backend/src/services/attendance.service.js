@@ -11,6 +11,9 @@ const getAttendances = async (userRole, userId, userDepartment, startDate, endDa
   }
 
   if (startDate || endDate) {
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      throw new ApiError(400, 'startDate cannot be after endDate');
+    }
     whereClause.date = {};
     if (startDate) whereClause.date.gte = new Date(startDate);
     if (endDate) whereClause.date.lte = new Date(endDate);
