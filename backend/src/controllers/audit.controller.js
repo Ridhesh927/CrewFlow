@@ -2,6 +2,9 @@ const auditService = require('../services/audit.service');
 
 const getAuditLogs = async (request, reply) => {
   try {
+    if (request.user?.role !== 'ADMIN') {
+      return reply.code(403).send({ success: false, error: 'Access denied. Administrator privileges required.' });
+    }
     const logs = await auditService.getAuditLogs();
     return { success: true, logs };
   } catch (error) {

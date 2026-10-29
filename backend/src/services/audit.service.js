@@ -27,8 +27,52 @@ const logAction = async ({ userId, action, resource, resourceId, details, ipAddr
   }
 };
 
+function sanitizeDetails(details) {
+  if (!details || typeof details !== 'object') return details;
+  const sensitiveKeys = ['password', 'token', 'secret', 'hash', 'jwt', 'cookie', 'authorization'];
+  
+  const sanitize = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(sanitize);
+
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const isSensitive = sensitiveKeys.some(s => key.toLowerCase().includes(s));
+      if (isSensitive) {
+        result[key] = '[REDACTED]';
+      } else if (value && typeof value === 'object') {
+        result[key] = sanitize(value);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  };
+
+  return sanitize(details);
+}
+
+function maskIpAddress(ip) {
+  if (!ip) return null;
+  // If IPv4: 192.168.1.45 -> 192.168.1.***
+  if (ip.includes('.')) {
+    const parts = ip.split('.');
+    if (parts.length === 4) {
+      return `${parts[0]}.${parts[1]}.${parts[2]}.***`;
+    }
+  }
+  // If IPv6: mask the suffix
+  if (ip.includes(':')) {
+    const parts = ip.split(':');
+    if (parts.length > 2) {
+      return `${parts.slice(0, 2).join(':')}:****:****`;
+    }
+  }
+  return '***.***.***.***';
+}
+
 const getAuditLogs = async () => {
-  return await prisma.auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     include: {
       user: {
         select: { id: true, name: true, email: true, role: true }
@@ -37,6 +81,21 @@ const getAuditLogs = async () => {
     orderBy: { createdAt: 'desc' },
     take: 500 // Limit to last 500 logs for performance
   });
+
+  return logs.map(log => ({
+    id: log.id,
+    action: log.action,
+    resource: log.resource,
+    resourceId: log.resourceId,
+    createdAt: log.createdAt,
+    user: log.user ? {
+      id: log.user.id,
+      name: log.user.name,
+      role: log.user.role
+    } : null,
+    details: sanitizeDetails(log.details),
+    ipAddress: maskIpAddress(log.ipAddress)
+  }));
 };
 
 const ApiError = require('../plugins/ApiError');

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { executeApiRequest } from "@/services/api";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useAuthStore } from "@/store/useAuthStore";
+import { AccessDenied } from "@/components/AccessDenied";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AuditLogsPage() {
   useDocumentTitle("Audit Logs");
+  const user = useAuthStore(state => state.user);
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,9 +31,14 @@ export default function AuditLogsPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchLogs();
-  }, []);
+    if (user?.role === "ADMIN") {
+      fetchLogs();
+    }
+  }, [user?.role]);
+
+  if (user && user.role !== "ADMIN") {
+    return <AccessDenied />;
+  }
 
   const getActionColor = (action: string) => {
     if (action.includes("CREATED") || action.includes("APPROVED")) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
