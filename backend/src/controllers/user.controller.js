@@ -204,14 +204,35 @@ const bulkUpdateDepartment = async (request, reply) => {
 }
 
 const bulkUploadUsers = async (request, reply) => {
-  const data = await request.file();
+  let data;
+  try {
+    data = await request.file({
+      limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+      }
+    });
+  } catch (err) {
+    return reply.code(400).send({ error: 'File upload error: ' + err.message });
+  }
+
   if (!data) {
     return reply.code(400).send({ error: 'No file uploaded' });
+  }
+
+  const filename = data.filename || '';
+  const mimetype = data.mimetype || '';
+  const isCsv = filename.toLowerCase().endsWith('.csv') || mimetype === 'text/csv' || mimetype === 'application/vnd.ms-excel';
+  if (!isCsv) {
+    return reply.code(400).send({ error: 'Invalid file format. Only CSV files (.csv) are allowed.' });
   }
   
   const requesterId = request.user.id;
   try {
     const result = await userService.bulkUploadUsers(data.file, requesterId);
+
+    if (data.file.truncated) {
+      return reply.code(400).send({ error: 'File size exceeds 5MB limit' });
+    }
     
     await auditService.logAction({
       userId: requesterId,
@@ -224,7 +245,7 @@ const bulkUploadUsers = async (request, reply) => {
     return { success: true, count: result.count, errors: result.errors };
   } catch (error) {
     if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
-    throw error;
+    return reply.code(400).send({ error: error.message || 'Error processing CSV file' });
   }
 }
 

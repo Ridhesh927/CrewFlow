@@ -437,23 +437,40 @@ const checkUserHierarchy = async (managerId, targetUserId) => {
 
 const { parse } = require('csv-parse');
 
+const ALLOWED_COLUMNS = ['email', 'password', 'name', 'role', 'department', 'specialId', 'phoneNo'];
+const ALLOWED_ROLES = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN', 'INTERN'];
+const MAX_CSV_ROWS = 500;
+
 const bulkUploadUsers = async (fileStream, managerId) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const results = [];
     const errors = [];
     let count = 0;
 
-    const parser = fileStream.pipe(parse({ columns: true, skip_empty_lines: true }));
+    const parser = fileStream.pipe(parse({
+      columns: (header) => {
+        const unexpected = header.filter(col => !ALLOWED_COLUMNS.includes(col.trim()));
+        if (unexpected.length > 0) {
+          throw new ApiError(400, `Unexpected columns in CSV: ${unexpected.join(', ')}`);
+        }
+        return header.map(h => h.trim());
+      },
+      skip_empty_lines: true
+    }));
 
     parser.on('readable', function() {
       let record;
       while ((record = parser.read()) !== null) {
+        if (results.length >= MAX_CSV_ROWS) {
+          parser.destroy(new ApiError(400, `CSV exceeds maximum limit of ${MAX_CSV_ROWS} rows`));
+          return;
+        }
         results.push(record);
       }
     });
 
     parser.on('error', function(err) {
-      reject(new ApiError(400, 'Error parsing CSV file'));
+      reject(err instanceof ApiError ? err : new ApiError(400, err.message || 'Error parsing CSV file'));
     });
 
     parser.on('end', async function() {
@@ -468,18 +485,32 @@ const bulkUploadUsers = async (fileStream, managerId) => {
               errors.push({ email: row.email, error: 'Missing required fields: email, password, name' });
               return;
             }
+
+            const cleanEmail = String(row.email).trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+              errors.push({ email: row.email, error: 'Invalid email format' });
+              return;
+            }
+
+            if (typeof row.password !== 'string' || row.password.length < 6) {
+              errors.push({ email: row.email, error: 'Password must be at least 6 characters' });
+              return;
+            }
+
+            const roleCandidate = row.role ? String(row.role).trim().toUpperCase() : 'INTERN';
+            const userRole = ALLOWED_ROLES.includes(roleCandidate) ? roleCandidate : 'INTERN';
             
             const hashedPassword = await argon2.hash(row.password);
             
             await prisma.user.create({
               data: {
-                email: row.email.trim(),
+                email: cleanEmail,
                 password: hashedPassword,
-                name: row.name,
-                role: row.role || 'INTERN',
-                department: row.department,
-                specialId: row.specialId,
-                phoneNo: row.phoneNo,
+                name: String(row.name).trim(),
+                role: userRole,
+                department: row.department ? String(row.department).trim() : null,
+                specialId: row.specialId ? String(row.specialId).trim() : null,
+                phoneNo: row.phoneNo ? String(row.phoneNo).trim() : null,
                 managerId: managerId
               }
             });

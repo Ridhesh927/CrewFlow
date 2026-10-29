@@ -6,6 +6,7 @@ import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2,
 import { useAuthStore } from "@/store/useAuthStore";
 import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment, useBulkUploadUsers } from "@/hooks/useUsers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,7 +124,20 @@ export default function UsersPage() {
   };
 
   const handleCsvUpload = () => {
-    if (!csvFile) return;
+    if (!csvFile) {
+      toast.error("Please select a CSV file to upload");
+      return;
+    }
+    const MAX_CSV_SIZE = 5 * 1024 * 1024;
+    const isCsv = csvFile.name.toLowerCase().endsWith(".csv") || csvFile.type === "text/csv" || csvFile.type === "application/vnd.ms-excel";
+    if (!isCsv) {
+      toast.error("Invalid file format. Please upload a CSV file (.csv)");
+      return;
+    }
+    if (csvFile.size > MAX_CSV_SIZE) {
+      toast.error("File size exceeds 5MB limit");
+      return;
+    }
     const formData = new FormData();
     formData.append("file", csvFile);
     bulkUploadUsers.mutate(formData, {
@@ -293,7 +307,30 @@ export default function UsersPage() {
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="csvFile">CSV File</Label>
-                    <Input id="csvFile" type="file" accept=".csv" onChange={(e) => setCsvFile(e.target.files?.[0] || null)} />
+                    <Input 
+                      id="csvFile" 
+                      type="file" 
+                      accept=".csv,text/csv" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file) {
+                          const isCsv = file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv" || file.type === "application/vnd.ms-excel";
+                          if (!isCsv) {
+                            toast.error("Invalid file format. Please select a CSV file (.csv)");
+                            e.target.value = "";
+                            setCsvFile(null);
+                            return;
+                          }
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error("File size exceeds 5MB limit");
+                            e.target.value = "";
+                            setCsvFile(null);
+                            return;
+                          }
+                        }
+                        setCsvFile(file);
+                      }} 
+                    />
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
                     <Button variant="outline" onClick={() => setShowCsvDialog(false)}>Cancel</Button>
