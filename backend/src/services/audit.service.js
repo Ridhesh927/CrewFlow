@@ -71,18 +71,35 @@ function maskIpAddress(ip) {
   return '***.***.***.***';
 }
 
-const getAuditLogs = async () => {
-  const logs = await prisma.auditLog.findMany({
-    include: {
-      user: {
-        select: { id: true, name: true, email: true, role: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 500 // Limit to last 500 logs for performance
-  });
+const getAuditLogs = async ({ page = 1, limit = 20, action, resource } = {}) => {
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const take = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+  const skip = (pageNum - 1) * take;
 
-  return logs.map(log => ({
+  const where = {};
+  if (action && typeof action === 'string') {
+    where.action = action;
+  }
+  if (resource && typeof resource === 'string') {
+    where.resource = resource;
+  }
+
+  const [total, logs] = await Promise.all([
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    })
+  ]);
+
+  const sanitizedLogs = logs.map(log => ({
     id: log.id,
     action: log.action,
     resource: log.resource,
@@ -96,6 +113,16 @@ const getAuditLogs = async () => {
     details: sanitizeDetails(log.details),
     ipAddress: maskIpAddress(log.ipAddress)
   }));
+
+  return {
+    logs: sanitizedLogs,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: take,
+      totalPages: Math.ceil(total / take) || 1
+    }
+  };
 };
 
 const ApiError = require('../plugins/ApiError');

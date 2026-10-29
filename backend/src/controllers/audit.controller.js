@@ -5,8 +5,13 @@ const getAuditLogs = async (request, reply) => {
     if (request.user?.role !== 'ADMIN') {
       return reply.code(403).send({ success: false, error: 'Access denied. Administrator privileges required.' });
     }
-    const logs = await auditService.getAuditLogs();
-    return { success: true, logs };
+    const { page, limit, action, resource } = request.query || {};
+    const result = await auditService.getAuditLogs({ page, limit, action, resource });
+    return {
+      success: true,
+      logs: result.logs,
+      pagination: result.pagination
+    };
   } catch (error) {
     if (error.statusCode) return reply.code(error.statusCode).send({ error: error.message });
     request.log.error(error);
