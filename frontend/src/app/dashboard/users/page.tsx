@@ -54,6 +54,7 @@ export default function UsersPage() {
   const deleteUser = useDeleteUser();
   const promoteUser = usePromoteUser();
   const updateUser = useUpdateUser();
+  const isMutating = deleteUser.isPending || promoteUser.isPending || updateUser.isPending || toggleStatus.isPending;
   const [open, setOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ 
     isOpen: boolean; 
@@ -611,15 +612,25 @@ export default function UsersPage() {
           )}
 
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })}>Cancel</Button>
+            <Button 
+              variant="outline" 
+              disabled={isMutating}
+              onClick={() => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })}
+            >
+              Cancel
+            </Button>
             <Button 
               variant={confirmDialog.type === 'delete' ? "destructive" : "default"}
-              disabled={updateUser.isPending}
+              disabled={isMutating}
               onClick={() => {
                 if (confirmDialog.type === 'delete') {
-                  deleteUser.mutate(confirmDialog.user.id);
+                  deleteUser.mutate(confirmDialog.user.id, {
+                    onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
+                  });
                 } else if (confirmDialog.type === 'editRole') {
-                  promoteUser.mutate({ id: confirmDialog.user.id, newRole: confirmDialog.newRole });
+                  promoteUser.mutate({ id: confirmDialog.user.id, newRole: confirmDialog.newRole }, {
+                    onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
+                  });
                 } else if (confirmDialog.type === 'editUser') {
                   const payload = {
                     ...confirmDialog.editData,
@@ -633,9 +644,9 @@ export default function UsersPage() {
                     onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
                   });
                 }
-                setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} });
               }}
             >
+              {isMutating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {confirmDialog.type === 'delete' ? 'Delete' : 'Confirm'}
             </Button>
           </div>
