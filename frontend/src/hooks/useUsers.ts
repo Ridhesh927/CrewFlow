@@ -18,6 +18,21 @@ export function useGetAllUsers(params?: { scope?: string } | string) {
   });
 }
 
+export function useGetMyTeam() {
+  return useQuery({
+    queryKey: ["users", "my-team"],
+    queryFn: () => executeApiRequest(`/users/team`),
+  });
+}
+
+export function useGetPotentialManagers(enabled = true) {
+  return useQuery({
+    queryKey: ["users", "managers"],
+    queryFn: () => executeApiRequest(`/users/managers`),
+    enabled,
+  });
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({

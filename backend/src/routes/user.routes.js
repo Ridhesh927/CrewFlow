@@ -5,6 +5,8 @@ const { createUserSchema, updateUserSchema } = require('../schemas/user.schema')
 
 async function userRoutes(fastify, options) {
   fastify.get('/leaderboard', { preValidation: [fastify.authenticate] }, userController.getLeaderboard)
+  fastify.get('/team', { preValidation: [fastify.authenticate] }, userController.getMyTeam)
+  fastify.get('/managers', { preValidation: [fastify.authenticate] }, userController.getPotentialManagers)
   fastify.get('/:id/dashboard', { preValidation: [fastify.authenticate] }, userController.getDashboardData)
 
   fastify.get('/', { preValidation: [fastify.authenticate] }, userController.getAllUsers)

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Users, Search, Edit2, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useGetAllUsers, useUpdateUser } from "@/hooks/useUsers";
+import { useGetMyTeam, useGetPotentialManagers, useUpdateUser } from "@/hooks/useUsers";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,10 @@ import {
 // ────────────────────────────────────────────────────────────
 // Reassign Manager Dialog
 // ────────────────────────────────────────────────────────────
-function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: any; open: boolean; onOpenChange: (open: boolean) => void; allUsers: any[] }) {
+function ReassignManagerDialog({ user, open, onOpenChange }: { user: any; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [managerId, setManagerId] = useState<string>(user?.managerId ? String(user.managerId) : "none");
   const { mutate: updateUser, isPending } = useUpdateUser();
+  const { data: managersData } = useGetPotentialManagers(open);
 
   const handleReassign = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +34,7 @@ function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: a
     );
   };
 
-  // Filter potential managers (Admins, Senior TLs, TLs, Captains) who are not the user themselves
-  const potentialManagers = allUsers.filter(u => 
-    u.id !== user.id && ["ADMIN", "SENIOR_TL", "TL", "CAPTAIN"].includes(u.role)
-  );
+  const potentialManagers = (managersData?.managers || []).filter((m: any) => m.id !== user.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,7 +54,7 @@ function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: a
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Manager</SelectItem>
-                {potentialManagers.map(m => (
+                {potentialManagers.map((m: any) => (
                   <SelectItem key={m.id} value={String(m.id)}>
                     {m.name} ({m.role})
                   </SelectItem>
@@ -81,19 +79,14 @@ function ReassignManagerDialog({ user, open, onOpenChange, allUsers }: { user: a
 // ────────────────────────────────────────────────────────────
 export default function TeamPage() {
   const currentUser = useAuthStore(state => state.user);
-  const { data, isLoading } = useGetAllUsers();
+  const { data, isLoading } = useGetMyTeam();
   const [searchQuery, setSearchQuery] = useState("");
   const [reassignUser, setReassignUser] = useState<any | null>(null);
 
   if (!currentUser) return null;
 
   const isAdminOrSenior = ["ADMIN", "SENIOR_TL"].includes(currentUser.role);
-  const allUsers = data?.users || [];
-
-  // If Admin/Senior TL, they can see everyone (or we could just show their direct reports).
-  // The task asks for "list of direct subordinates". Let's show direct subordinates by default.
-  // If ADMIN, maybe show a toggle or just show direct subordinates. Let's just do direct subordinates.
-  const directSubordinates = allUsers.filter((u: any) => u.managerId === currentUser.id);
+  const directSubordinates = data?.team || [];
 
   const filteredTeam = directSubordinates.filter((u: any) => {
     const q = searchQuery.toLowerCase();
@@ -203,7 +196,6 @@ export default function TeamPage() {
           user={reassignUser}
           open={!!reassignUser}
           onOpenChange={(open) => !open && setReassignUser(null)}
-          allUsers={allUsers}
         />
       )}
     </motion.div>

@@ -61,6 +61,31 @@ const getAllUsers = async (request, reply) => {
   }
 }
 
+const getMyTeam = async (request, reply) => {
+  const currentUserId = request.user.id;
+  try {
+    const team = await userService.getMyTeam(currentUserId);
+    return { success: true, team };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
+  }
+}
+
+const getPotentialManagers = async (request, reply) => {
+  try {
+    const managers = await userService.getPotentialManagers();
+    return { success: true, managers };
+  } catch (error) {
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message });
+    }
+    throw error;
+  }
+}
+
 const promoteUser = async (request, reply) => {
   const targetUserId = parseInt(request.params.id);
   const { newRole } = request.body;
@@ -249,4 +274,4 @@ const bulkUploadUsers = async (request, reply) => {
   }
 }
 
-module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile, bulkUpdateDepartment, bulkUploadUsers }
+module.exports = { getDashboardData, createUser, promoteUser, getLeaderboard, getAllUsers, getMyTeam, getPotentialManagers, toggleUserStatus, deleteUser, getUserById, updateUser, updateProfile, bulkUpdateDepartment, bulkUploadUsers }

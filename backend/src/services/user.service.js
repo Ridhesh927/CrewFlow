@@ -526,10 +526,55 @@ const bulkUploadUsers = async (fileStream, managerId) => {
   });
 };
 
+const getMyTeam = async (userId) => {
+  const team = await prisma.user.findMany({
+    where: { managerId: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      specialId: true,
+      department: true,
+      points: true,
+      isActive: true,
+      managerId: true
+    },
+    orderBy: {
+      name: 'asc'
+    }
+  });
+
+  return team.map(u => ({
+    ...u,
+    department: u.department?.name || null
+  }));
+};
+
+const getPotentialManagers = async () => {
+  const managers = await prisma.user.findMany({
+    where: {
+      role: { in: ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'] },
+      isActive: true
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true
+    },
+    orderBy: {
+      name: 'asc'
+    }
+  });
+  return managers;
+};
+
 module.exports = {
   getDashboardData,
   createUser,
   getAllUsers,
+  getMyTeam,
+  getPotentialManagers,
   promoteUser,
   getLeaderboard,
   toggleUserStatus,
