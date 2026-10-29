@@ -3,17 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { executeApiRequest } from "@/services/api";
 import { motion } from "framer-motion";
-import { Trophy, Medal, Star, Shield, ArrowUp } from "lucide-react";
+import { Trophy, Medal, Star, Shield, AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const fetchLeaderboard = () => executeApiRequest("/users/leaderboard");
 
 export default function LeaderboardPage() {
   useDocumentTitle("Leaderboard");
   
-  const { data: result, isLoading } = useQuery({
+  const { data: result, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: fetchLeaderboard,
   });
@@ -50,6 +51,25 @@ export default function LeaderboardPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center border rounded-xl border-dashed bg-card/50">
+          <div className="p-3 bg-destructive/10 rounded-full mb-3 text-destructive">
+            <AlertCircle className="h-8 w-8" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Failed to Load Leaderboard</h3>
+          <p className="text-sm text-muted-foreground max-w-md mb-4">
+            {(error as any)?.message || "We encountered an issue fetching the rankings. Please try again."}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+            Try Again
+          </Button>
         </div>
       ) : (
         <motion.div 
