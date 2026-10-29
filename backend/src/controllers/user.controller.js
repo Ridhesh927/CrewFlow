@@ -44,9 +44,14 @@ const getAllUsers = async (request, reply) => {
   const currentUserId = request.user.id;
   const page = parseInt(request.query.page, 10) || 1;
   const limit = parseInt(request.query.limit, 10) || 50;
+  const scope = request.query.scope;
   
+  if (scope === 'admin-management' && request.user.role !== 'ADMIN') {
+    return reply.code(403).send({ error: 'Forbidden: Admin access required for user management directory' });
+  }
+
   try {
-    const users = await userService.getAllUsers(currentUserId, page, limit);
+    const users = await userService.getAllUsers(currentUserId, page, limit, scope, request.user);
     return { success: true, users };
   } catch (error) {
     if (error.statusCode) {

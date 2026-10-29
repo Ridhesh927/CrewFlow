@@ -107,42 +107,65 @@ const createUser = async (userData, managerId) => {
   return userWithoutPassword;
 };
 
-const getAllUsers = async (currentUserId, page = 1, limit = 50) => {
+const getAllUsers = async (currentUserId, page = 1, limit = 50, scope = null, requester = null) => {
   const skip = (page - 1) * limit;
 
-  const currentUserRecord = await prisma.user.findUnique({
+  const currentUserRecord = requester || await prisma.user.findUnique({
     where: { id: currentUserId },
-    select: { role: true, department: true }
+    select: { id: true, role: true, department: true }
   });
+
+  const isAdmin = currentUserRecord && currentUserRecord.role === 'ADMIN';
+
+  if (scope === 'admin-management' && !isAdmin) {
+    throw new ApiError(403, 'Forbidden: Admin access required for user management');
+  }
 
   let whereClause = {};
 
-  if (currentUserRecord && currentUserRecord.role !== 'ADMIN' && currentUserRecord.departmentId) {
+  if (!isAdmin && currentUserRecord && currentUserRecord.departmentId) {
     whereClause.departmentId = currentUserRecord.departmentId;
   }
+
+  // DTO field selection: return sensitive management fields only when requested by an admin
+  const selectFields = (isAdmin && scope === 'admin-management') ? {
+    id: true,
+    email: true,
+    name: true,
+    role: true,
+    department: true,
+    specialId: true,
+    phoneNo: true,
+    isActive: true,
+    points: true,
+    manager: {
+      select: {
+        id: true,
+        name: true,
+        role: true
+      }
+    }
+  } : {
+    id: true,
+    name: true,
+    role: true,
+    department: true,
+    isActive: true,
+    points: true,
+    manager: {
+      select: {
+        id: true,
+        name: true,
+        role: true
+      }
+    }
+  };
 
   const users = await prisma.user.findMany({
     where: whereClause,
     skip: skip,
     take: limit,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      department: true,
-      specialId: true,
-      phoneNo: true,
-      isActive: true,
-      points: true,
-      manager: {
-        select: {
-          id: true,
-          name: true,
-          role: true
-        }
-      }
-    },
+    select: selectFields,
     orderBy: {
       createdAt: 'desc'
     }

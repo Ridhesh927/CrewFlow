@@ -9,10 +9,12 @@ export function useLeaderboard() {
   });
 }
 
-export function useGetAllUsers() {
+export function useGetAllUsers(params?: { scope?: string } | string) {
+  const scope = typeof params === "string" ? params : params?.scope;
+  const query = scope ? `?scope=${encodeURIComponent(scope)}` : "";
   return useQuery({
-    queryKey: ["users", "all"],
-    queryFn: () => executeApiRequest(`/users`),
+    queryKey: ["users", "all", scope || "default"],
+    queryFn: () => executeApiRequest(`/users${query}`),
   });
 }
 

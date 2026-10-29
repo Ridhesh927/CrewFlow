@@ -56,6 +56,14 @@ describe('User API Integration Tests', () => {
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.users)).toBe(true);
     });
+
+    it('should deny non-admin when scope=admin-management is requested', async () => {
+      const response = await request(fastify.server)
+        .get('/api/v1/users?scope=admin-management')
+        .set('Authorization', `Bearer ${internToken}`);
+
+      expect(response.status).toBe(403);
+    });
   });
 
   describe('POST /api/v1/users', () => {

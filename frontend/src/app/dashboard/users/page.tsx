@@ -42,10 +42,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { AccessDenied } from "@/components/AccessDenied";
+
 export default function UsersPage() {
   useDocumentTitle("User Management");
   const currentUser = useAuthStore((state) => state.user);
-  const { data, isLoading } = useGetAllUsers();
+  const { data, isLoading } = useGetAllUsers({ scope: "admin-management" });
   const createUser = useCreateUser();
   const toggleStatus = useToggleUserStatus();
   const deleteUser = useDeleteUser();
@@ -173,6 +175,10 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [departmentFilter, roleFilter, statusFilter, pointsSort, searchQuery]);
+
+  if (currentUser && currentUser.role !== "ADMIN") {
+    return <AccessDenied message="You do not have permission to access User Management. This page is restricted to administrators." />;
+  }
 
   return (
     <motion.div
