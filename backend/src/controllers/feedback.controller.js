@@ -36,7 +36,10 @@ const getFeedback = async (request, reply) => {
     if (user.role === 'ADMIN') {
       feedback = feedback.map(f => ({
         ...f,
-        user: f.user ? { ...f.user, department: f.user.department } : null
+        user: f.user ? {
+          ...f.user,
+          department: typeof f.user.department === 'object' && f.user.department?.name ? f.user.department.name : (f.user.department || null)
+        } : null
       }));
     }
     return { success: true, feedback };

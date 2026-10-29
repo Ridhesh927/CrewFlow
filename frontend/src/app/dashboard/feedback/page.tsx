@@ -56,7 +56,10 @@ export default function FeedbackPage() {
     );
   };
 
-  const feedbacks = data?.feedback || [];
+  const rawFeedbacks = data?.feedback || [];
+  const feedbacks = rawFeedbacks.filter((item: any) => 
+    user?.role === "ADMIN" || item.userId === user?.id
+  );
 
   return (
     <div className="max-w-5xl mx-auto py-8">
@@ -64,7 +67,9 @@ export default function FeedbackPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Feedback & Grievances</h1>
           <p className="text-muted-foreground mt-1">
-            {user?.role === "ADMIN" ? "Review and manage employee feedback." : "Submit suggestions or report grievances anonymously."}
+            {user?.role === "ADMIN" 
+              ? "Review and manage employee feedback." 
+              : "Submit suggestions or report grievances to leadership for review."}
           </p>
         </div>
 
@@ -76,6 +81,9 @@ export default function FeedbackPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>New Feedback</DialogTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Submissions are reviewed by administrators to address grievances and improve the organization.
+                </p>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                 <div className="space-y-2">
