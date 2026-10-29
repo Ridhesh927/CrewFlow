@@ -3,10 +3,44 @@
 import { useAuthStore } from "@/store/useAuthStore";
 import { useTeamAnalytics } from "@/hooks/useAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, LineChart } from "@/components/analytics/Charts";
+import { BarChart } from "@/components/analytics/Charts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, CheckCircle, TrendingUp, Calendar } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
+
+const toFiniteNumber = (val: unknown, fallback = 0): number => {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// Typed response schema to validate API response boundary
+const TeamAnalyticsItemSchema = z.object({
+  userId: z.union([z.number(), z.string()]).optional(),
+  user: z.object({
+    name: z.string().default("Unknown User"),
+  }).partial().default({}),
+  averageRating: z.union([z.number(), z.string(), z.null(), z.undefined()])
+    .transform(val => {
+      const n = Number(val);
+      return Number.isFinite(n) ? Math.max(0, n) : 0;
+    }),
+  taskCompletions: z.union([z.number(), z.string(), z.null(), z.undefined()])
+    .transform(val => {
+      const n = Number(val);
+      return Number.isFinite(n) ? Math.max(0, n) : 0;
+    }),
+  attendanceStats: z.record(z.string(), z.unknown()).optional().default({})
+    .transform(stats => ({
+      present: toFiniteNumber(stats.Present, 0),
+      absent: toFiniteNumber(stats.Absent, 0),
+      late: toFiniteNumber(stats.Late, 0),
+    })),
+});
+
+const TeamAnalyticsResponseSchema = z.object({
+  analytics: z.array(TeamAnalyticsItemSchema).default([]),
+});
 
 export default function AnalyticsPage() {
   const user = useAuthStore((state) => state.user);
@@ -36,35 +70,38 @@ export default function AnalyticsPage() {
     );
   }
 
-  const analyticsData = data.analytics || [];
+  // Parse and normalize raw analytics data through schema
+  const parsed = TeamAnalyticsResponseSchema.safeParse(data);
+  const normalizedData = parsed.success ? parsed.data.analytics : [];
 
-  // Calculate aggregates
-  const totalUsers = analyticsData.length;
-  const averageRating = analyticsData.reduce((acc: number, curr: any) => acc + curr.averageRating, 0) / (totalUsers || 1);
-  const totalTasks = analyticsData.reduce((acc: number, curr: any) => acc + curr.taskCompletions, 0);
-  
-  let totalPresent = 0;
-  let totalAbsent = 0;
-  let totalLate = 0;
-  
-  analyticsData.forEach((userStat: any) => {
-    totalPresent += userStat.attendanceStats?.Present || 0;
-    totalAbsent += userStat.attendanceStats?.Absent || 0;
-    totalLate += userStat.attendanceStats?.Late || 0;
-  });
+  // Calculate aggregates safely with finite numeric guards
+  const totalUsers = normalizedData.length;
+  const sumRatings = normalizedData.reduce((acc, curr) => acc + curr.averageRating, 0);
+  const averageRating = totalUsers > 0 ? sumRatings / totalUsers : 0;
+  const totalTasks = normalizedData.reduce((acc, curr) => acc + curr.taskCompletions, 0);
 
-  const attendanceRate = totalPresent / ((totalPresent + totalAbsent + totalLate) || 1) * 100;
+  const totalPresent = normalizedData.reduce((acc, curr) => acc + curr.attendanceStats.present, 0);
+  const totalAbsent = normalizedData.reduce((acc, curr) => acc + curr.attendanceStats.absent, 0);
+  const totalLate = normalizedData.reduce((acc, curr) => acc + curr.attendanceStats.late, 0);
+  const totalRecordedAttendance = totalPresent + totalAbsent + totalLate;
+  const attendanceRate = totalRecordedAttendance > 0 ? (totalPresent / totalRecordedAttendance) * 100 : 0;
 
   // Transform data for charts
-  const performanceData = analyticsData.map((a: any) => ({
-    name: a.user.name,
-    rating: a.averageRating
-  })).sort((a: any, b: any) => b.rating - a.rating).slice(0, 10); // Top 10
+  const performanceData = normalizedData
+    .map((a) => ({
+      name: a.user?.name || "Unknown User",
+      rating: Number(a.averageRating.toFixed(1)),
+    }))
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 10); // Top 10
 
-  const taskData = analyticsData.map((a: any) => ({
-    name: a.user.name,
-    tasks: a.taskCompletions
-  })).sort((a: any, b: any) => b.tasks - a.tasks).slice(0, 10);
+  const taskData = normalizedData
+    .map((a) => ({
+      name: a.user?.name || "Unknown User",
+      tasks: a.taskCompletions,
+    }))
+    .sort((a, b) => b.tasks - a.tasks)
+    .slice(0, 10);
 
   return (
     <div className="space-y-6">

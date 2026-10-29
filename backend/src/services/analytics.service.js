@@ -105,19 +105,22 @@ const getTeamAnalytics = async (requester, departmentQuery) => {
 
   ratings.forEach(r => {
     if(analyticsMap.has(r.userId)) {
-      analyticsMap.get(r.userId).averageRating = r._avg.rating || 0;
+      const avg = Number(r._avg.rating);
+      analyticsMap.get(r.userId).averageRating = Number.isFinite(avg) ? parseFloat(avg.toFixed(2)) : 0;
     }
   });
 
   taskCompletions.forEach(t => {
     if(analyticsMap.has(t.internId)) {
-      analyticsMap.get(t.internId).taskCompletions = t._count.id;
+      const count = Number(t._count.id);
+      analyticsMap.get(t.internId).taskCompletions = Number.isFinite(count) ? count : 0;
     }
   });
 
   attendances.forEach(a => {
     if(analyticsMap.has(a.userId)) {
-      analyticsMap.get(a.userId).attendanceStats[a.status] = a._count.status;
+      const count = Number(a._count.status);
+      analyticsMap.get(a.userId).attendanceStats[a.status] = Number.isFinite(count) ? count : 0;
     }
   });
 
