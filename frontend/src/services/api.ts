@@ -48,3 +48,49 @@ export const executeApiRequest = async (endpoint: string, options: RequestInit &
 
   return response.json();
 };
+
+export const executeFileDownload = async (
+  endpoint: string,
+  filename?: string,
+  options: RequestInit = {}
+): Promise<Blob> => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
+
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('auth-storage');
+      window.location.href = '/login';
+    }
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || 'File download failed');
+  }
+
+  const blob = await response.blob();
+
+  if (filename && typeof window !== 'undefined') {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
+  return blob;
+};

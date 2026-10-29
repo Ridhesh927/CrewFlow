@@ -7,6 +7,8 @@ import { useGetAttendances, useMarkAttendance } from "@/hooks/useAttendances";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { executeFileDownload } from "@/services/api";
+import { toast } from "sonner";
 
 import {
   Table,
@@ -186,25 +188,13 @@ export default function AttendancePage() {
 
   const handleExportCSV = async () => {
     try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Export failed');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `attendance_export_${startDate}_to_${endDate}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
+      await executeFileDownload(
+        `/analytics/export/attendance?startDate=${startDate}&endDate=${endDate}`,
+        `attendance_export_${startDate}_to_${endDate}.csv`
+      );
+      toast.success('Attendance exported successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Export failed');
       console.error("Export error", error);
     }
   };

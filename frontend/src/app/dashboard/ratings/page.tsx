@@ -7,6 +7,8 @@ import { useGetRatings, useCreateRating } from "@/hooks/useRatings";
 import { useGetAllUsers } from "@/hooks/useUsers";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { executeFileDownload } from "@/services/api";
+import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -233,25 +235,10 @@ export default function RatingsPage() {
 
   const handleExportCSV = async () => {
     try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/export/ratings`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Export failed');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ratings_export.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
+      await executeFileDownload('/analytics/export/ratings', 'ratings_export.csv');
+      toast.success('Ratings exported successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Export failed');
       console.error("Export error", error);
     }
   };
