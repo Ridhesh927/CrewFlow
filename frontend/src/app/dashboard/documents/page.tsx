@@ -34,6 +34,33 @@ const getFileIcon = (fileType: string) => {
   return <File className="h-10 w-10 text-muted-foreground" />;
 };
 
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".docx", ".xlsx", ".txt", ".csv"];
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+  "text/csv",
+];
+
+const validateDocumentFile = (file: File): string | null => {
+  const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return `Invalid file type (${ext}). Allowed: PDF, Images (JPG, PNG, WebP), Word, Excel, CSV, Text.`;
+  }
+  if (file.type && !ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
+    return "Unsupported file format. Please upload an approved document or image.";
+  }
+  if (file.size > MAX_DOCUMENT_SIZE) {
+    return "File exceeds the maximum allowed size of 10MB.";
+  }
+  return null;
+};
+
 // ────────────────────────────────────────────────────────────
 // Upload Document Dialog (Admins / Managers)
 // ────────────────────────────────────────────────────────────
@@ -52,9 +79,11 @@ function UploadDocumentDialog() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setError("File must be under 10MB.");
+      const validationError = validateDocumentFile(file);
+      if (validationError) {
+        setError(validationError);
         setFileName("");
+        if (fileRef.current) fileRef.current.value = "";
       } else {
         setError("");
         setFileName(file.name);
@@ -71,6 +100,12 @@ function UploadDocumentDialog() {
     const file = fileRef.current?.files?.[0];
     if (!file) {
       setError("Please select a file to upload.");
+      return;
+    }
+
+    const validationError = validateDocumentFile(file);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -114,12 +149,18 @@ function UploadDocumentDialog() {
                 ) : (
                   <>
                     <p className="text-sm font-medium">Click to select a file</p>
-                    <p className="text-xs">PDF, Images, etc. (Max 10MB)</p>
+                    <p className="text-xs">PDF, Images, Word, Excel, CSV, Text (Max 10MB)</p>
                   </>
                 )}
               </div>
             </div>
-            <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange} />
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx,.txt,.csv,application/pdf,image/jpeg,image/png,image/webp,text/plain,text/csv"
+              onChange={handleFileChange}
+            />
           </div>
 
           <div className="space-y-2">
