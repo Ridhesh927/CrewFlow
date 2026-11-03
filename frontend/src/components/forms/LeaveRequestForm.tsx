@@ -14,7 +14,11 @@ const leaveSchema = z.object({
   }),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
-  reason: z.string().min(10, 'Reason must be at least 10 characters long.'),
+  reason: z
+    .string()
+    .trim()
+    .min(10, 'Reason must be at least 10 characters long.')
+    .max(1000, 'Reason cannot exceed 1000 characters.'),
 }).refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
   message: 'End date cannot be prior to start date.',
   path: ['endDate'], // Binds error to the endDate input field
@@ -37,7 +41,7 @@ export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?
         leaveType: data.leaveType,
         startDate: data.startDate,
         endDate: data.endDate,
-        reason: data.reason,
+        reason: data.reason.trim(),
       });
       toast.success('Leave requested successfully');
       if (onSubmitSuccess) {
