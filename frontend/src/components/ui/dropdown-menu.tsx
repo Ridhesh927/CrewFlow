@@ -6,21 +6,53 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
+type DropdownMenuProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Root>
+type DropdownMenuPortalProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Portal>
+type DropdownMenuTriggerProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Trigger>
+type DropdownMenuContentProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Popup> & {
+  align?: React.ComponentPropsWithoutRef<typeof MenuPrimitive.Positioner>["align"]
+  alignOffset?: React.ComponentPropsWithoutRef<typeof MenuPrimitive.Positioner>["alignOffset"]
+  side?: React.ComponentPropsWithoutRef<typeof MenuPrimitive.Positioner>["side"]
+  sideOffset?: React.ComponentPropsWithoutRef<typeof MenuPrimitive.Positioner>["sideOffset"]
+}
+type DropdownMenuGroupProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Group>
+type DropdownMenuLabelProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.GroupLabel> & {
+  inset?: boolean
+}
+type DropdownMenuItemProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Item> & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}
+type DropdownMenuSubProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.SubmenuRoot>
+type DropdownMenuSubTriggerProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.SubmenuTrigger> & {
+  inset?: boolean
+}
+type DropdownMenuSubContentProps = DropdownMenuContentProps
+type DropdownMenuCheckboxItemProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.CheckboxItem> & {
+  inset?: boolean
+}
+type DropdownMenuRadioGroupProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.RadioGroup>
+type DropdownMenuRadioItemProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.RadioItem> & {
+  inset?: boolean
+}
+type DropdownMenuSeparatorProps = React.ComponentPropsWithoutRef<typeof MenuPrimitive.Separator>
+type DropdownMenuShortcutProps = React.ComponentPropsWithoutRef<"span">
+
 function DropdownMenu({
   ...props
-}: any) {
+}: DropdownMenuProps) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
 function DropdownMenuPortal({
   ...props
-}: any) {
+}: DropdownMenuPortalProps) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
 }
 
 function DropdownMenuTrigger({
   ...props
-}: any) {
+}: DropdownMenuTriggerProps) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
@@ -31,7 +63,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   className,
   ...props
-}: any) {
+}: DropdownMenuContentProps) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -54,7 +86,7 @@ function DropdownMenuContent({
 
 function DropdownMenuGroup({
   ...props
-}: any) {
+}: DropdownMenuGroupProps) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
 
@@ -62,7 +94,7 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: { className?: string; inset?: boolean; [key: string]: any }) {
+}: DropdownMenuLabelProps) {
   return (
     <MenuPrimitive.GroupLabel
       data-slot="dropdown-menu-label"
@@ -80,7 +112,7 @@ function DropdownMenuItem({
   inset,
   variant = "default",
   ...props
-}: { className?: string; inset?: boolean; variant?: "default" | "destructive"; [key: string]: any }) {
+}: DropdownMenuItemProps) {
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
@@ -96,7 +128,7 @@ function DropdownMenuItem({
 
 function DropdownMenuSub({
   ...props
-}) {
+}: DropdownMenuSubProps) {
   return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />;
 }
 
@@ -105,7 +137,7 @@ function DropdownMenuSubTrigger({
   inset,
   children,
   ...props
-}: { className?: string; inset?: boolean; children?: React.ReactNode; [key: string]: any }) {
+}: DropdownMenuSubTriggerProps) {
   return (
     <MenuPrimitive.SubmenuTrigger
       data-slot="dropdown-menu-sub-trigger"
@@ -128,7 +160,7 @@ function DropdownMenuSubContent({
   sideOffset = 0,
   className,
   ...props
-}: any) {
+}: DropdownMenuSubContentProps) {
   return (
     <DropdownMenuContent
       data-slot="dropdown-menu-sub-content"
@@ -150,7 +182,7 @@ function DropdownMenuCheckboxItem({
   checked,
   inset,
   ...props
-}: { className?: string; children?: React.ReactNode; checked?: boolean | "indeterminate"; inset?: boolean; [key: string]: any }) {
+}: DropdownMenuCheckboxItemProps) {
   return (
     <MenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
@@ -159,7 +191,7 @@ function DropdownMenuCheckboxItem({
         "relative flex cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
-      checked={checked as any}
+      checked={checked}
       {...props}>
       <span
         className="pointer-events-none absolute right-2 flex items-center justify-center"
@@ -175,7 +207,7 @@ function DropdownMenuCheckboxItem({
 
 function DropdownMenuRadioGroup({
   ...props
-}: any) {
+}: DropdownMenuRadioGroupProps) {
   return (<MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />);
 }
 
@@ -185,7 +217,7 @@ function DropdownMenuRadioItem({
   inset,
   value,
   ...props
-}: { className?: string; children?: React.ReactNode; inset?: boolean; value: string; [key: string]: any }) {
+}: DropdownMenuRadioItemProps) {
   return (
     <MenuPrimitive.RadioItem
       value={value}
@@ -211,7 +243,7 @@ function DropdownMenuRadioItem({
 function DropdownMenuSeparator({
   className,
   ...props
-}: any) {
+}: DropdownMenuSeparatorProps) {
   return (
     <MenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
@@ -223,7 +255,7 @@ function DropdownMenuSeparator({
 function DropdownMenuShortcut({
   className,
   ...props
-}: any) {
+}: DropdownMenuShortcutProps) {
   return (
     <span
       data-slot="dropdown-menu-shortcut"
