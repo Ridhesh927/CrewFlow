@@ -5,6 +5,16 @@ import { useState } from "react";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+const rawGoogleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+if (!rawGoogleClientId) {
+  throw new Error(
+    "Configuration error: Missing required environment variable NEXT_PUBLIC_GOOGLE_CLIENT_ID. Google OAuth cannot initialize without a valid client ID."
+  );
+}
+
+const googleClientId: string = rawGoogleClientId;
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -20,7 +30,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>
