@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Loader2, Users, Search, Edit2, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useGetMyTeam, useGetPotentialManagers, useUpdateUser } from "@/hooks/useUsers";
+import { AccessDenied } from "@/components/AccessDenied";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,12 @@ export default function TeamPage() {
   const [reassignUser, setReassignUser] = useState<any | null>(null);
 
   if (!currentUser) return null;
+
+  if (currentUser.role === "INTERN") {
+    return (
+      <AccessDenied message="You do not have permission to view Team Management. This area is restricted to team leads, captains, and administrators." />
+    );
+  }
 
   const isAdminOrSenior = ["ADMIN", "SENIOR_TL"].includes(currentUser.role);
   const directSubordinates = data?.team || [];

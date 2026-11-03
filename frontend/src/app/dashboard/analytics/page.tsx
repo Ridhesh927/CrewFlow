@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Users, CheckCircle, TrendingUp, Calendar } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { AccessDenied } from "@/components/AccessDenied";
 
 const toFiniteNumber = (val: unknown, fallback = 0): number => {
   const n = Number(val);
@@ -44,6 +45,12 @@ const TeamAnalyticsResponseSchema = z.object({
 
 export default function AnalyticsPage() {
   const user = useAuthStore((state) => state.user);
+
+  if (user && !["ADMIN", "SENIOR_TL", "TL"].includes(user.role)) {
+    return (
+      <AccessDenied message="You do not have permission to view Analytics & Reporting. This area is restricted to administrators and team leads." />
+    );
+  }
   const [departmentFilter, setDepartmentFilter] = useState("");
   const { data, isLoading, error } = useTeamAnalytics(departmentFilter);
 

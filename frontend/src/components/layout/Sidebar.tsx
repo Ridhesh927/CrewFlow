@@ -40,6 +40,8 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: any, 
   if (!user) return null;
 
   // Define links based on role
+  // Architectural Note: Role-based filtering in Sidebar is presentation/navigation UX only.
+  // Direct route and endpoint authorization is enforced independently at route and server layers.
   const getNavLinks = () => {
     const commonLinks = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
