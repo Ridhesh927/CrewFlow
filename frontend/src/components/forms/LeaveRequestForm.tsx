@@ -31,10 +31,10 @@ export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?
   const onFormSubmit = async (data: z.infer<typeof leaveSchema>) => {
     try {
       await apiClient.post('/leaves', {
+        leaveType: data.leaveType,
         startDate: data.startDate,
         endDate: data.endDate,
         reason: data.reason,
-        // The backend schema expects leaveType if we update it, but let's just pass what we have
       });
       console.log('Leave requested successfully');
       if (onSubmitSuccess) {
