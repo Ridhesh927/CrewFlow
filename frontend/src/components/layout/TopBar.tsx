@@ -95,12 +95,14 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                 </div>
               ) : (
                 safeNotifications.slice(0, 10).map((notif) => (
-                  <div
+                  <button
                     key={notif.id}
-                    className={`flex flex-col p-3 border-b last:border-b-0 cursor-pointer hover:bg-accent/50 transition-colors ${!notif.isRead ? 'bg-primary/5' : ''}`}
+                    type="button"
+                    className={`w-full text-left flex flex-col p-3 border-b last:border-b-0 cursor-pointer hover:bg-accent/50 transition-colors outline-none focus-visible:bg-accent focus-visible:ring-1 focus-visible:ring-ring ${!notif.isRead ? 'bg-primary/5' : ''}`}
                     onClick={() => {
                       if (!notif.isRead) markAsRead(notif.id);
                     }}
+                    aria-label={`Notification: ${notif.message}. ${notif.isRead ? 'Read' : 'Unread. Click to mark as read.'}`}
                   >
                     <div className="flex justify-between items-start mb-1">
                       <span className={`text-xs font-semibold ${
@@ -116,7 +118,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                     <p className={`text-sm ${!notif.isRead ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {notif.message}
                     </p>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
