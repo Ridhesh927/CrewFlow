@@ -13,19 +13,34 @@ export interface Notification {
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<number[]>([]);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
 
   const fetchNotifications = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
     try {
+      setIsLoading(true);
+      setIsError(false);
+      setError(null);
       const data = await executeApiRequest('/notifications');
-      if (data.success) {
+      if (data && data.success) {
         setNotifications(data.notifications || []);
+      } else {
+        throw new Error(data?.message || 'Failed to fetch notifications');
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
+    } catch (err: any) {
+      setIsError(true);
+      setError(err?.message || 'Failed to fetch notifications');
+      console.error("Failed to fetch notifications", err);
+    } finally {
+      setIsLoading(false);
     }
   }, [isAuthenticated]);
 
@@ -77,6 +92,10 @@ export function useNotifications() {
     markAsRead,
     markAllAsRead,
     refresh: fetchNotifications,
+    refetch: fetchNotifications,
+    isLoading,
+    isError,
+    error,
     isMarkingAllAsRead: isMarkingAllRead,
     pendingNotificationIds: pendingIds,
     isMarkingReadId: (id: number) => pendingIds.includes(id),

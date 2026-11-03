@@ -7,14 +7,27 @@ import { Check, CheckCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function NotificationHistory() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, isMarkingAllAsRead, isMarkingReadId } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isMarkingAllAsRead, isMarkingReadId, isLoading, isError, error, refetch } = useNotifications();
 
-  if (!notifications) {
+  if (isLoading || !notifications) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center p-8 border border-destructive/20 rounded-lg bg-destructive/5 space-y-3">
+        <p className="text-sm font-medium text-destructive">
+          {error || 'Failed to load notifications.'}
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Try Again
+        </Button>
       </div>
     );
   }
