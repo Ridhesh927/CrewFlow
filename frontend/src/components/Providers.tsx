@@ -23,7 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 60 * 1000, // 1 minute
             refetchOnWindowFocus: false,
-            throwOnError: true,
+            throwOnError: false, // Components handle errors via isError/error query state
           },
         },
       })
