@@ -19,7 +19,7 @@ export function useNotifications() {
     try {
       const data = await executeApiRequest('/notifications');
       if (data.success) {
-        setNotifications(data.notifications);
+        setNotifications(data.notifications || []);
       }
     } catch (error) {
       console.error("Failed to fetch notifications", error);

@@ -23,6 +23,8 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const user = useAuthStore((state) => state.user);
   const { setTheme, theme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const safeNotifications = notifications ?? [];
+  const safeUnreadCount = unreadCount ?? 0;
   const router = useRouter();
 
   if (!user) return null;
@@ -64,16 +66,16 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         <DropdownMenu>
           <DropdownMenuTrigger className="relative text-muted-foreground h-10 w-10 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground outline-none ring-ring focus-visible:ring-2">
             <Bell className="h-5 w-5 pointer-events-none" />
-            {unreadCount > 0 && (
+            {safeUnreadCount > 0 && (
               <span className="absolute top-2 right-2 flex h-3 w-3 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground pointer-events-none">
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {safeUnreadCount > 9 ? '9+' : safeUnreadCount}
               </span>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuGroup className="flex justify-between items-center p-2">
               <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
-              {unreadCount > 0 && (
+              {safeUnreadCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={() => markAllAsRead()} className="text-xs h-7 text-primary">
                   Mark all read
                 </Button>
@@ -81,12 +83,12 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <div className="max-h-[300px] overflow-y-auto">
-              {notifications.length === 0 ? (
+              {safeNotifications.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   No new notifications
                 </div>
               ) : (
-                notifications.slice(0, 10).map((notif) => (
+                safeNotifications.slice(0, 10).map((notif) => (
                   <div
                     key={notif.id}
                     className={`flex flex-col p-3 border-b last:border-b-0 cursor-pointer hover:bg-accent/50 transition-colors ${!notif.isRead ? 'bg-primary/5' : ''}`}
