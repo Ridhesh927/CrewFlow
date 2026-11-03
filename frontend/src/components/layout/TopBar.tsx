@@ -23,7 +23,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const { setTheme, theme } = useTheme();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isMarkingAllAsRead } = useNotifications();
   const safeNotifications = notifications ?? [];
   const safeUnreadCount = unreadCount ?? 0;
   const router = useRouter();
@@ -82,8 +82,8 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
             <DropdownMenuGroup className="flex justify-between items-center p-2">
               <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
               {safeUnreadCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => markAllAsRead()} className="text-xs h-7 text-primary">
-                  Mark all read
+                <Button variant="ghost" size="sm" onClick={() => markAllAsRead()} disabled={isMarkingAllAsRead} className="text-xs h-7 text-primary">
+                  {isMarkingAllAsRead ? 'Marking...' : 'Mark all read'}
                 </Button>
               )}
             </DropdownMenuGroup>

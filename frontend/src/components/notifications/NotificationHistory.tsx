@@ -7,7 +7,7 @@ import { Check, CheckCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function NotificationHistory() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isMarkingAllAsRead, isMarkingReadId } = useNotifications();
 
   if (!notifications) {
     return (
@@ -37,9 +37,9 @@ export function NotificationHistory() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button onClick={markAllAsRead} variant="outline" className="flex items-center gap-2">
+          <Button onClick={markAllAsRead} disabled={isMarkingAllAsRead} variant="outline" className="flex items-center gap-2">
             <CheckCheck className="h-4 w-4" />
-            Mark all as read
+            {isMarkingAllAsRead ? 'Marking read...' : 'Mark all as read'}
           </Button>
         )}
       </div>
@@ -73,11 +73,12 @@ export function NotificationHistory() {
               <Button 
                 variant="ghost" 
                 size="sm" 
+                disabled={isMarkingReadId(notif.id) || isMarkingAllAsRead}
                 onClick={() => markAsRead(notif.id)}
                 className="self-start sm:self-auto text-muted-foreground hover:text-primary"
               >
                 <Check className="h-4 w-4 mr-2" />
-                Mark read
+                {isMarkingReadId(notif.id) ? 'Marking...' : 'Mark read'}
               </Button>
             )}
           </div>
