@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import apiClient from '@/lib/api-client';
+import { toast } from 'sonner';
 
 // Define Zod schema with strict date validation logic
 const leaveSchema = z.object({
@@ -20,6 +21,7 @@ const leaveSchema = z.object({
 });
 
 export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?: () => void }) {
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -30,23 +32,36 @@ export default function LeaveRequestForm({ onSubmitSuccess }: { onSubmitSuccess?
 
   const onFormSubmit = async (data: z.infer<typeof leaveSchema>) => {
     try {
+      setSubmitError(null);
       await apiClient.post('/leaves', {
         leaveType: data.leaveType,
         startDate: data.startDate,
         endDate: data.endDate,
         reason: data.reason,
       });
-      console.log('Leave requested successfully');
+      toast.success('Leave requested successfully');
       if (onSubmitSuccess) {
         onSubmitSuccess();
       }
-    } catch (err) {
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Failed to submit leave request. Please try again.';
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
       console.error('Submission failed', err);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 p-4">
+      {submitError && (
+        <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md" role="alert">
+          {submitError}
+        </div>
+      )}
       <div>
         <label className="block text-sm font-medium text-gray-700">Leave Type</label>
         <select {...register('leaveType')} className="w-full mt-1 border rounded-md p-2">
