@@ -21,11 +21,17 @@ import { useTheme } from "next-themes";
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const { setTheme, theme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const safeNotifications = notifications ?? [];
   const safeUnreadCount = unreadCount ?? 0;
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   if (!user) return null;
 
@@ -159,10 +165,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground"
-              onClick={() => {
-                // Mock logout behavior
-                window.location.href = "/login";
-              }}
+              onClick={handleLogout}
             >
               Log out
             </DropdownMenuItem>
