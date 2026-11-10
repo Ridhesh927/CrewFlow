@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,28 @@ export function InternDashboard({ userId }: { userId: number | string }) {
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
   const { data: userData, isLoading: loadingUser } = useUserAnalytics(userId);
   const { data: trendsData, isLoading: loadingTrends } = useUserTrends(userId);
+
+  const [completedSubTaskIds, setCompletedSubTaskIds] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem(`crewflow_completed_subtasks_${userId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleSubTask = (stId: number) => {
+    setCompletedSubTaskIds((prev) => {
+      const next = prev.includes(stId) ? prev.filter((id) => id !== stId) : [...prev, stId];
+      try {
+        localStorage.setItem(`crewflow_completed_subtasks_${userId}`, JSON.stringify(next));
+      } catch (e) {
+        console.error("Failed to save checklist state", e);
+      }
+      return next;
+    });
+  };
 
   if (loadingDash || loadingUser || loadingTrends) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -105,18 +128,30 @@ export function InternDashboard({ userId }: { userId: number | string }) {
                     <div className="mt-2 pt-2 border-t">
                       <p className="text-xs font-medium mb-2 text-muted-foreground">Checklist</p>
                       <div className="space-y-1">
-                        {task.subTasks.map((st: any) => (
-                          <div key={st.id} className="flex items-center space-x-2">
-                            <input 
-                              type="checkbox" 
-                              id={`subtask-${st.id}`} 
-                              className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
-                            />
-                            <label htmlFor={`subtask-${st.id}`} className="text-xs text-foreground">
-                              {st.title}
-                            </label>
-                          </div>
-                        ))}
+                        {task.subTasks.map((st: any) => {
+                          const isProofCompleted = proofs.some(
+                            (p: any) => p.taskId === task.id && p.completedSubTasks?.includes(st.id)
+                          );
+                          const isChecked = isProofCompleted || completedSubTaskIds.includes(st.id);
+                          return (
+                            <div key={st.id} className="flex items-center space-x-2">
+                              <input 
+                                type="checkbox" 
+                                id={`subtask-${st.id}`} 
+                                checked={isChecked}
+                                disabled={isProofCompleted}
+                                onChange={() => !isProofCompleted && toggleSubTask(st.id)}
+                                className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+                              />
+                              <label 
+                                htmlFor={`subtask-${st.id}`} 
+                                className={`text-xs ${isChecked ? "text-muted-foreground line-through" : "text-foreground"} cursor-pointer select-none`}
+                              >
+                                {st.title} {isProofCompleted && <span className="text-[10px] text-green-600 no-underline font-normal">(submitted)</span>}
+                              </label>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
