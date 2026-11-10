@@ -20,7 +20,8 @@ module.exports = (io) => {
 
     // User joins their department or role room
     socket.on('join_room', (room) => {
-      if (room === socket.user.department || socket.user.role === 'ADMIN') {
+      const allowedRoom = socket.user.department || 'General';
+      if (room === 'General' || room === allowedRoom || socket.user.role === 'ADMIN') {
          socket.join(room);
       } else {
          socket.emit('error', 'Unauthorized to join this room');
@@ -29,10 +30,26 @@ module.exports = (io) => {
 
     // Handle incoming chat messages
     socket.on('send_message', (data) => {
-      // data: { room, message, senderName, senderRole, timestamp }
-      
+      // Enforce server-derived room, identity, role, and timestamp
+      const targetRoom = data?.room || socket.user.department || 'General';
+      const allowedRoom = socket.user.department || 'General';
+
+      if (targetRoom !== 'General' && targetRoom !== allowedRoom && socket.user.role !== 'ADMIN') {
+        socket.emit('error', 'Unauthorized to send message to this room');
+        return;
+      }
+
+      const verifiedPayload = {
+        room: targetRoom,
+        message: typeof data?.message === 'string' ? data.message : '',
+        senderId: socket.user.id,
+        senderName: socket.user.name || socket.user.email || 'User',
+        senderRole: socket.user.role,
+        timestamp: new Date().toISOString(),
+      };
+
       // Broadcast to all clients in the room (including sender if they are in the room)
-      io.to(data.room).emit('receive_message', data);
+      io.to(targetRoom).emit('receive_message', verifiedPayload);
     });
 
     // Handle announcements

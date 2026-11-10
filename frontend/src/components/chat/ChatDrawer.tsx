@@ -21,8 +21,11 @@ export function ChatDrawer() {
   useEffect(() => {
     if (!user) return;
 
-    // Initialize socket connection
-    socket = io(process.env.NEXT_PUBLIC_API_URL as string);
+    // Initialize socket connection with auth token
+    const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") : null;
+    socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
+      auth: { token },
+    });
 
     // Join a generic company room, or specific department room
     const room = user.department || "General";
@@ -47,15 +50,11 @@ export function ChatDrawer() {
     if (!messageInput.trim() || !user) return;
 
     const room = user.department || "General";
-    const msgData = {
+    // Only send room and message; sender identity, role, and timestamp are server-derived
+    socket.emit("send_message", {
       room,
-      message: messageInput,
-      senderName: user.name,
-      senderRole: user.role,
-      timestamp: new Date().toISOString(),
-    };
-
-    socket.emit("send_message", msgData);
+      message: messageInput.trim(),
+    });
     setMessageInput("");
   };
 
