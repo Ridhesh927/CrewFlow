@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FileCheck, AlertCircle, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,25 @@ import { useRouter } from "next/navigation";
 export function ManagerDashboard({ role, userId }: { role: string; userId: number | string }) {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
-  const { mutate: approveProof, isPending: approving } = useApproveProof();
-  const { mutate: rejectProof, isPending: rejecting } = useRejectProof();
+  const { mutate: approveProof } = useApproveProof();
+  const { mutate: rejectProof } = useRejectProof();
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+
+  const handleApprove = (proofId: number) => {
+    setApprovingId(proofId);
+    approveProof(proofId, {
+      onSettled: () => setApprovingId(null),
+    });
+  };
+
+  const handleReject = (proofId: number) => {
+    setRejectingId(proofId);
+    rejectProof(proofId, {
+      onSettled: () => setRejectingId(null),
+    });
+  };
+
   const roleName = role === "SENIOR_TL" ? "Department" : role === "TL" ? "Team" : "Interns";
 
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
@@ -104,18 +122,18 @@ export function ManagerDashboard({ role, userId }: { role: string; userId: numbe
                          size="sm"
                          variant="outline"
                          className="text-destructive hover:bg-destructive/10 border-destructive/20"
-                         disabled={rejecting || approving}
-                         onClick={() => rejectProof(proof.id)}
+                         disabled={approvingId !== null || rejectingId !== null}
+                         onClick={() => handleReject(proof.id)}
                        >
-                         {rejecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                         {rejectingId === proof.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
                          Reject
                        </Button>
                        <Button
                          size="sm"
-                         disabled={approving || rejecting}
-                         onClick={() => approveProof(proof.id)}
+                         disabled={approvingId !== null || rejectingId !== null}
+                         onClick={() => handleApprove(proof.id)}
                        >
-                         {approving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                         {approvingId === proof.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
                          Approve
                        </Button>
                     </div>
