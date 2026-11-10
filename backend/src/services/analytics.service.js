@@ -154,10 +154,32 @@ const getTrendsAnalytics = async (targetUserId, requester) => {
     orderBy: { month: 'asc' }
   });
 
-  const trends = ratingsByMonth.map(r => ({
-    month: r.month,
-    averageRating: r._avg.rating || 0
-  }));
+  // Get approved proofs for the user to count task completions by month
+  const approvedProofs = await prisma.proof.findMany({
+    where: { internId: targetUserId, status: 'Approved' },
+    select: { timestamp: true }
+  });
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const proofCountsByMonthKey = {};
+  approvedProofs.forEach(p => {
+    if (p.timestamp) {
+      const d = new Date(p.timestamp);
+      const nameKey = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+      const isoKey = d.toISOString().substring(0, 7);
+      proofCountsByMonthKey[nameKey] = (proofCountsByMonthKey[nameKey] || 0) + 1;
+      proofCountsByMonthKey[isoKey] = (proofCountsByMonthKey[isoKey] || 0) + 1;
+    }
+  });
+
+  const trends = ratingsByMonth.map(r => {
+    const avg = Number(r._avg.rating);
+    return {
+      month: r.month,
+      averageRating: Number.isFinite(avg) ? parseFloat(avg.toFixed(2)) : 0,
+      tasksCompleted: proofCountsByMonthKey[r.month] || 0
+    };
+  });
 
   return { trends };
 };

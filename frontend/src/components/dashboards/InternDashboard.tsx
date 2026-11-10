@@ -36,7 +36,7 @@ export function InternDashboard({ userId }: { userId: number | string }) {
     ? trendsData.trends.map((t: any) => ({
         name: t.month,
         rating: t.averageRating,
-        tasks: tasksCompleted // if we want per-month tasks, we'd need that from backend. For now keep total or omit.
+        tasks: t.tasksCompleted ?? t.taskCompletions ?? 0
       }))
     : [
         { name: 'Current', rating: parseFloat(rating), tasks: tasksCompleted }
