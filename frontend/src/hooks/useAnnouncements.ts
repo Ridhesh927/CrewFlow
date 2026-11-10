@@ -1,14 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { executeApiRequest } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 
-export const useGetAnnouncements = (isAdmin: boolean = false) => {
+export const useGetAnnouncements = (requestedAdminScope?: boolean) => {
+  const user = useAuthStore((state) => state.user);
+  const isActualAdmin = user?.role === 'ADMIN';
+  const shouldFetchAll = isActualAdmin && (requestedAdminScope !== undefined ? requestedAdminScope : true);
+
   return useQuery({
-    queryKey: ['announcements', isAdmin],
+    queryKey: ['announcements', shouldFetchAll ? 'admin-all' : 'targeted', user?.id],
     queryFn: async () => {
-      // Admins get ALL announcements, others get targeted announcements
-      const endpoint = isAdmin ? '/announcements/all' : '/announcements';
+      // The endpoint is strictly guarded: only authenticated ADMINs can query /announcements/all
+      const endpoint = shouldFetchAll ? '/announcements/all' : '/announcements';
       return executeApiRequest(endpoint);
     },
+    enabled: !!user,
   });
 };
 
