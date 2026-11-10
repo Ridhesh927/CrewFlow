@@ -1,30 +1,9 @@
-import { useState, useEffect } from 'react';
-import { executeApiRequest } from '../services/api';
+import { useDashboardMetrics } from './useAnalytics';
 
 export const useDashboard = (userId: any) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(!!userId);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const result = await executeApiRequest(`/users/${userId}/dashboard`);
-        setData(result);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [userId]);
-
-  return { data, loading, error };
+  const query = useDashboardMetrics(userId);
+  return {
+    ...query,
+    loading: query.isLoading,
+  };
 };
