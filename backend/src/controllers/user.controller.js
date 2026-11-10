@@ -99,7 +99,7 @@ const promoteUser = async (request, reply) => {
       action: 'USER_PROMOTED',
       resource: 'User',
       resourceId: user.id,
-      details: { newRole },
+      details: { targetUserId, oldRole: user.oldRole, newRole, outcome: 'SUCCESS' },
       ipAddress: request.ip
     });
 

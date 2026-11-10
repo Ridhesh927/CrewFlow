@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { executeApiRequest } from "../services/api";
 import { toast } from "sonner";
 
+export type UserRole = "ADMIN" | "SENIOR_TL" | "TL" | "CAPTAIN" | "INTERN";
+
 export function useLeaderboard() {
   return useQuery({
     queryKey: ["users", "leaderboard"],
@@ -86,7 +88,7 @@ export function useDeleteUser() {
 export function usePromoteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, newRole }: { id: number; newRole: string }) =>
+    mutationFn: ({ id, newRole }: { id: number; newRole: UserRole }) =>
       executeApiRequest(`/users/${id}/promote`, {
         method: "PUT",
         body: JSON.stringify({ newRole }),

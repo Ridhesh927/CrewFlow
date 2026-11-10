@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Plus, Users as UsersIcon, Eye, EyeOff, MoreHorizontal, Trash2, Power, Search, UserCog, Upload } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment, useBulkUploadUsers } from "@/hooks/useUsers";
+import { useGetAllUsers, useCreateUser, useToggleUserStatus, useDeleteUser, usePromoteUser, useUpdateUser, useBulkUpdateDepartment, useBulkUploadUsers, UserRole } from "@/hooks/useUsers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { toast } from "sonner";
 
@@ -60,7 +60,7 @@ export default function UsersPage() {
     isOpen: boolean; 
     type: 'delete' | 'status' | 'editRole' | 'editUser' | null; 
     user: any | null; 
-    newRole: string;
+    newRole: UserRole | "";
     editData: any;
   }>({ 
     isOpen: false, 
@@ -627,7 +627,7 @@ export default function UsersPage() {
                   deleteUser.mutate(confirmDialog.user.id, {
                     onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
                   });
-                } else if (confirmDialog.type === 'editRole') {
+                } else if (confirmDialog.type === 'editRole' && confirmDialog.newRole) {
                   promoteUser.mutate({ id: confirmDialog.user.id, newRole: confirmDialog.newRole }, {
                     onSuccess: () => setConfirmDialog({ isOpen: false, type: null, user: null, newRole: "", editData: {} })
                   });

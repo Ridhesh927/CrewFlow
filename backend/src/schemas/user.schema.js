@@ -26,4 +26,15 @@ const updateUserSchema = z.object({
   })
 });
 
-module.exports = { createUserSchema, updateUserSchema };
+const promoteUserSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/, 'User ID must be numeric'),
+  }),
+  body: z.object({
+    newRole: z.enum(['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN', 'INTERN'], {
+      message: 'Invalid role provided for promotion',
+    }),
+  }),
+});
+
+module.exports = { createUserSchema, updateUserSchema, promoteUserSchema };

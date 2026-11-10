@@ -192,6 +192,10 @@ const promoteUser = async (targetUserId, newRole, requesterRole) => {
 
   if (!targetUser) throw new ApiError(404, 'User not found');
 
+  if (targetUser.role === newRole) {
+    throw new ApiError(400, 'User already has the specified role');
+  }
+
   if (targetUser.role === 'ADMIN' && newRole !== 'ADMIN') {
     const activeAdminCount = await prisma.user.count({
       where: { role: 'ADMIN', isActive: true }
@@ -220,7 +224,7 @@ const promoteUser = async (targetUserId, newRole, requesterRole) => {
     data: { role: newRole }
   });
 
-  const userWithoutPassword = { ...updatedUser };
+  const userWithoutPassword = { ...updatedUser, oldRole: targetUser.role };
   delete userWithoutPassword.password;
   
   return userWithoutPassword;
