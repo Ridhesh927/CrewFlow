@@ -17,10 +17,10 @@ export function useUserAnalytics(userId: any) {
   });
 }
 
-export function useTeamAnalytics(department: any = "") {
+export function useTeamAnalytics(department?: string) {
   return useQuery({
-    queryKey: ["analytics", "team", department],
-    queryFn: () => executeApiRequest(`/analytics/team${department ? `?department=${department}` : ''}`),
+    queryKey: ["analytics", "team", department || "all"],
+    queryFn: () => executeApiRequest(`/analytics/team${department ? `?department=${encodeURIComponent(department)}` : ''}`),
   });
 }
 

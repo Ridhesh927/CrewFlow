@@ -60,7 +60,14 @@ const getTeamAnalytics = async (requester, departmentQuery) => {
     else {
        usersQuery = { role: { not: 'ADMIN' } };
     }
+  } else if (role === 'SENIOR_TL') {
+    // SENIOR_TL scope is server-constrained to their allowed department
+    const targetDept = requester.department || departmentQuery;
+    usersQuery = targetDept 
+      ? { department: targetDept, role: { notIn: ['ADMIN', 'SENIOR_TL'] } }
+      : { managerId: requesterId };
   } else {
+    // TL and CAPTAIN can only view their direct subordinates
     usersQuery = { managerId: requesterId };
   }
 

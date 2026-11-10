@@ -6,17 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useDashboardMetrics, useTeamAnalytics } from "@/hooks/useAnalytics";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useApproveProof, useRejectProof } from "@/hooks/useTasks";
 import { useRouter } from "next/navigation";
 
 export function ManagerDashboard({ role, userId }: { role: string; userId: number | string }) {
+  const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const { mutate: approveProof, isPending: approving } = useApproveProof();
   const { mutate: rejectProof, isPending: rejecting } = useRejectProof();
   const roleName = role === "SENIOR_TL" ? "Department" : role === "TL" ? "Team" : "Interns";
 
   const { data: dashboardData, isLoading: loadingDash } = useDashboardMetrics(userId);
-  const { data: teamData, isLoading: loadingTeam } = useTeamAnalytics();
+  const { data: teamData, isLoading: loadingTeam } = useTeamAnalytics(user?.department || undefined);
 
   if (loadingDash || loadingTeam) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
