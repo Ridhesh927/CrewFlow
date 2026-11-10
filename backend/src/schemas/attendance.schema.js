@@ -6,7 +6,7 @@ const markAttendanceSchema = z.object({
     date: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)),
     status: z.enum(['Present', 'Absent', 'Leave', 'Informed', 'Late', 'Completed', 'Terminated', 'Discontinued']),
     remarks: z.string().optional().nullable(),
-  })
+  }).strict()
 });
 
 module.exports = { markAttendanceSchema };

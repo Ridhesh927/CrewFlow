@@ -17,14 +17,25 @@ export const useGetAttendances = (startDate?: string, endDate?: string) => {
   });
 };
 
+export type AttendanceStatus =
+  | 'Present'
+  | 'Absent'
+  | 'Leave'
+  | 'Informed'
+  | 'Late'
+  | 'Completed'
+  | 'Terminated'
+  | 'Discontinued';
+
+export interface MarkAttendancePayload {
+  targetUserId: number;
+  date: string;
+  status: AttendanceStatus;
+  remarks?: string;
+}
+
 export const useMarkAttendance = () => {
   const queryClient = useQueryClient();
-  type MarkAttendancePayload = {
-    targetUserId: number;
-    date: string;
-    status: string;
-    remarks?: string;
-  };
 
   return useMutation({
     mutationFn: (data: MarkAttendancePayload) => executeApiRequest('/attendances/mark', {

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, Search, Calendar, Clock, AlertCircle, Edit2, Download } from "lucide-react";
-import { useGetAttendances, useMarkAttendance } from "@/hooks/useAttendances";
+import { useGetAttendances, useMarkAttendance, AttendanceStatus } from "@/hooks/useAttendances";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -144,11 +144,11 @@ export default function AttendancePage() {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-  const handleStatusChange = (userId: number, dateStr: string, newStatus: string) => {
+  const handleStatusChange = (userId: number, dateStr: string, newStatus: AttendanceStatus) => {
     markAttendance({ targetUserId: userId, date: dateStr, status: newStatus });
   };
 
-  const editableStatuses = ["Present", "Absent", "Leave", "Informed", "Late", "Completed", "Terminated", "Discontinued"];
+  const editableStatuses: AttendanceStatus[] = ["Present", "Absent", "Leave", "Informed", "Late", "Completed", "Terminated", "Discontinued"];
 
   const renderCell = (row: any, dateStr: string) => {
     const record = row.attendanceByDate[dateStr];
