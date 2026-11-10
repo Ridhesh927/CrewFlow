@@ -19,10 +19,16 @@ export function useNotifications() {
   const [pendingIds, setPendingIds] = useState<number[]>([]);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const user = useAuthStore(state => state.user);
 
   const fetchNotifications = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
+      setNotifications([]);
+      setPendingIds([]);
+      setIsMarkingAllRead(false);
       setIsLoading(false);
+      setIsError(false);
+      setError(null);
       return;
     }
     try {
@@ -42,15 +48,24 @@ export function useNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setNotifications([]);
+      setPendingIds([]);
+      setIsMarkingAllRead(false);
+      setIsLoading(false);
+      setIsError(false);
+      setError(null);
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications();
     // Optional: poll every minute
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, isAuthenticated, user?.id]);
 
   const markAsRead = async (id: number) => {
     if (pendingIds.includes(id)) return;
