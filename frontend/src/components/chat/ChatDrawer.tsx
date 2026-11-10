@@ -21,9 +21,22 @@ export function ChatDrawer() {
   useEffect(() => {
     if (!user) return;
 
-    // Initialize socket connection with auth token
+    // Initialize socket connection with explicit socket origin and auth token
     const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") : null;
-    socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
+    const socketOrigin =
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
+      (() => {
+        try {
+          return process.env.NEXT_PUBLIC_API_URL
+            ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+            : "http://localhost:3001";
+        } catch {
+          return "http://localhost:3001";
+        }
+      })();
+
+    socket = io(socketOrigin, {
+      path: "/socket.io",
       auth: { token },
     });
 
