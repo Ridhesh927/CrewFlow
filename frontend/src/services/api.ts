@@ -1,96 +1,80 @@
+import apiClient from '@/lib/api-client';
+
 // Base configuration for API calls
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Unified API request executor routing all calls through the canonical apiClient.
+ * Ensures consistent authentication, token refresh, and 401 handling across the app.
+ */
 export const executeApiRequest = async (endpoint: string, options: RequestInit & { body?: any } = {}) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
-
-  // Detect FormData — don't set Content-Type (browser sets it with boundary automatically)
-  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
-
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
-  };
-
   const method = ((options.method as string) || 'GET').toUpperCase();
+  let data = options.body;
 
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  // Fastify body parser crashes if Content-Type is application/json but body is empty
-  if (!options.body && !isFormData && ['POST', 'PUT', 'PATCH'].includes(method)) {
-    options.body = JSON.stringify({});
-  }
-
-  // Remove Content-Type for methods that cannot have a body
-  if (['GET', 'HEAD', 'DELETE'].includes(method)) {
-    delete headers['Content-Type'];
-  }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('auth-storage'); // Also clear zustand storage if applicable
-      window.location.href = '/login';
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      // Keep raw string if not valid JSON
     }
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || error.message || 'API request failed');
   }
 
-  return response.json();
+  try {
+    const response = await apiClient.request({
+      url: endpoint,
+      method: method as any,
+      data,
+      headers: options.headers as any,
+    });
+
+    return response.data;
+  } catch (err: any) {
+    const message =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      err?.message ||
+      'API request failed';
+    const errorObj = new Error(message);
+    (errorObj as any).response = err?.response;
+    (errorObj as any).status = err?.response?.status;
+    throw errorObj;
+  }
 };
 
+/**
+ * Unified file download executor using the canonical apiClient with blob response.
+ */
 export const executeFileDownload = async (
   endpoint: string,
   filename?: string,
   options: RequestInit = {}
 ): Promise<Blob> => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
+  try {
+    const response = await apiClient.get(endpoint, {
+      responseType: 'blob',
+      headers: options.headers as any,
+    });
 
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
-  };
+    const blob = new Blob([response.data]);
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('auth-storage');
-      window.location.href = '/login';
+    if (filename && typeof window !== 'undefined') {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     }
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || error.message || 'File download failed');
+
+    return blob;
+  } catch (err: any) {
+    const message =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      err?.message ||
+      'File download failed';
+    throw new Error(message);
   }
-
-  const blob = await response.blob();
-
-  if (filename && typeof window !== 'undefined') {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  }
-
-  return blob;
 };
