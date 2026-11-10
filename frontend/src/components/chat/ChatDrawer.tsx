@@ -9,14 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-let socket: Socket;
-
 export function ChatDrawer() {
   const user = useAuthStore((state) => state.user);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -35,21 +34,28 @@ export function ChatDrawer() {
         }
       })();
 
-    socket = io(socketOrigin, {
+    const socketInstance: Socket = io(socketOrigin, {
       path: "/socket.io",
       auth: { token },
     });
+    socketRef.current = socketInstance;
 
     // Join a generic company room, or specific department room
     const room = user.department || "General";
-    socket.emit("join_room", room);
+    socketInstance.emit("join_room", room);
 
-    socket.on("receive_message", (data) => {
+    const onMessageReceived = (data: any) => {
       setMessages((prev) => [...prev, data]);
-    });
+    };
+
+    socketInstance.on("receive_message", onMessageReceived);
 
     return () => {
-      socket.disconnect();
+      socketInstance.off("receive_message", onMessageReceived);
+      socketInstance.disconnect();
+      if (socketRef.current === socketInstance) {
+        socketRef.current = null;
+      }
     };
   }, [user]);
 
@@ -60,11 +66,11 @@ export function ChatDrawer() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageInput.trim() || !user) return;
+    if (!messageInput.trim() || !user || !socketRef.current) return;
 
     const room = user.department || "General";
     // Only send room and message; sender identity, role, and timestamp are server-derived
-    socket.emit("send_message", {
+    socketRef.current.emit("send_message", {
       room,
       message: messageInput.trim(),
     });
