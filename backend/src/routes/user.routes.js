@@ -1,7 +1,7 @@
 const userController = require('../controllers/user.controller')
 const { requireRole, requireHierarchy } = require('../plugins/auth.middleware')
 const validate = require('../plugins/validate.middleware')
-const { createUserSchema, updateUserSchema, promoteUserSchema } = require('../schemas/user.schema')
+const { createUserSchema, updateUserSchema, updateProfileSchema, promoteUserSchema } = require('../schemas/user.schema')
 
 async function userRoutes(fastify, options) {
   fastify.get('/leaderboard', { preValidation: [fastify.authenticate] }, userController.getLeaderboard)
@@ -23,7 +23,10 @@ async function userRoutes(fastify, options) {
 
   fastify.patch(
     '/:id/profile',
-    { preValidation: [fastify.authenticate] },
+    { 
+      preValidation: [fastify.authenticate],
+      preHandler: [validate(updateProfileSchema)]
+    },
     userController.updateProfile
   )
 

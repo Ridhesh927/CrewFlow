@@ -4,6 +4,32 @@ import { toast } from "sonner";
 
 export type UserRole = "ADMIN" | "SENIOR_TL" | "TL" | "CAPTAIN" | "INTERN";
 
+export interface CreateUserDTO {
+  name: string;
+  email: string;
+  password?: string;
+  role: UserRole | string;
+  department: string;
+  specialId?: string;
+  phoneNo?: string;
+  managerId?: number | null;
+}
+
+export interface UpdateUserDTO {
+  name?: string;
+  email?: string;
+  department?: string;
+  specialId?: string;
+  phoneNo?: string;
+  managerId?: number | null;
+  isActive?: boolean;
+}
+
+export interface UpdateProfileDTO {
+  name?: string;
+  phoneNo?: string;
+}
+
 export function useLeaderboard() {
   return useQuery({
     queryKey: ["users", "leaderboard"],
@@ -38,7 +64,7 @@ export function useGetPotentialManagers(enabled = true) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: (data: CreateUserDTO) =>
       executeApiRequest(`/users`, {
         method: "POST",
         body: JSON.stringify(data),
@@ -114,7 +140,7 @@ export function useGetUserById(id: number) {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserDTO }) =>
       executeApiRequest(`/users/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
@@ -129,7 +155,7 @@ export function useUpdateUser() {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: UpdateProfileDTO }) =>
       executeApiRequest(`/users/${id}/profile`, {
         method: "PATCH",
         body: JSON.stringify(data),
